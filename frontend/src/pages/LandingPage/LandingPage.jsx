@@ -28,7 +28,7 @@ const LandingPage = () => {
         {(tabelDataAktual.length > 0 || tabelDataPredict.length > 0) && (
           <div className='py-6 grid gap-2 shadow-lg'>
             <div className='px-[10%]'>
-              <h2 className='text-[14px] font-bold text-white '>Tabel Harga Tomat Konsumen 1 bulan dari Tanggal Terpilih</h2>
+              <h2 className='text-[14px] font-bold text-white '>Tabel Harga Tomat Konsumen dari Tanggal Terpilih</h2>
             </div>
             <div className='px-[10%] '>
               

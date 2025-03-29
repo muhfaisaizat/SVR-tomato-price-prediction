@@ -98,7 +98,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
     return (
         <div className=' border  rounded-2xl bg-[#ffffff81] shadow-lg'>
             <div className='bg-white py-3 px-5 rounded-t-2xl text-center sm:text-left'>
-                <h1 className='text-sm font-bold '>Grafik Harga Tomat Konsumen 1 Bulan dari Tanggal Terpilih</h1>
+                <h1 className='text-sm font-bold '>Grafik Harga Tomat Konsumen dari Tanggal Terpilih</h1>
             </div>
             <div className='grid gap-6 mt-6 px-4 sm:px-10'>
                 <div className='flex flex-col sm:flex-row sm:justify-between gap-4'>
@@ -148,7 +148,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
                             <CardTitle>
                                 {priceType === "all" ? "Harga Aktual vs Prediksi" : priceType === "actual" ? "Harga Aktual" : "Harga Prediksi"}
                             </CardTitle>
-                            <CardDescription>Data harga selama satu bulan</CardDescription>
+                            <CardDescription>Data harga tomat</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <ScrollArea>
