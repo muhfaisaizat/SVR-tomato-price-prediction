@@ -85,8 +85,11 @@ async def upload_file(file: UploadFile = File(...), db=Depends(get_db)):
         required_columns = {"tanggal", "pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"}
         if not required_columns.issubset(df.columns):
             raise HTTPException(status_code=400, detail=f"Kolom wajib: {required_columns}")
-        df["tanggal"] = pd.to_datetime(df["tanggal"], format="%d/%m/%Y", errors="coerce").dt.strftime("%Y-%m-%d")
+        df["tanggal"] = pd.to_datetime(df["tanggal"], format="%Y-%m-%d", errors="coerce").dt.strftime("%Y-%m-%d")
         df.dropna(subset=["tanggal"], inplace=True)
+        df.replace(["N/A", "NA", "null", "None", "-", ""], 0, inplace=True)  # Ganti yang tidak valid jadi 0
+        df.fillna(0, inplace=True)  # Ubah semua NaN jadi 0
+
         def clean_price(value):
             if pd.isna(value) or value == "":
                 return None

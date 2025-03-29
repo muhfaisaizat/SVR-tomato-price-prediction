@@ -240,7 +240,7 @@ def get_price_history(
             last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns)  # ✅ Gunakan DataFrame
 
             predictions = []
-            for _ in range(30):
+            for _ in range(7):
                 pred = svr.predict(last_data)[0]
                 predictions.append(pred)
 
