@@ -20,7 +20,8 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 
 const ITEMS_PER_PAGE = 10;
@@ -54,6 +55,24 @@ const Preprocessing = ({ result }) => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentData = filteredData.slice(startIndex, endIndex);
+
+
+  const unduhExcel = () => {
+    if (dataHarga.length === 0) {
+      alert("Tidak ada data untuk diunduh.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataHarga);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Harga");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "data_harga_tomat.xlsx");
+  };
+
+
   return (
     <div className='bg-white w-full  rounded-[16px] '>
       <ScrollArea className="h-full w-full p-5">
@@ -62,6 +81,7 @@ const Preprocessing = ({ result }) => {
             <h1 className='text-[14px] font-semibold'>Preprocessing</h1>
             <p className='pr-[30px] text-[10px]'>Tahap ini dilakukan untuk mengubah kolom angka menjadi tipe numerik, menghapus nilai yang kosong, mengubah format tanggal menjadi format date time, menambahkan fitur baru Harga 2Hari Lalu sebagai tambahan informasi historis.</p>
           </div>
+          <div className='xl:flex sm:grid gap-3'>
           <div className="relative w-full md:w-[308px] h-[32px]">
             <SearchNormal1 className="absolute left-[16px] top-1/2 transform -translate-y-1/2" size={16} />
             <Input
@@ -73,6 +93,8 @@ const Preprocessing = ({ result }) => {
                 setCurrentPage(1); // Reset ke halaman pertama saat pencarian berubah
               }}
             />
+          </div>
+          <Button onClick={unduhExcel} className='h-[32px] bg-gradient-to-r from-[#402412a8] to-[#9a070790]'>unduh excel</Button>
           </div>
         </div>
         <div className="">
