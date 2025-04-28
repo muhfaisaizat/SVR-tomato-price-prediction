@@ -85,22 +85,34 @@ def predict_price(
     }
 
     # Inisialisasi Model SVR dengan parameter yang dipilih
-    svr_params = {
-        "kernel": kernel,
-        "C": C,
-        "gamma": gamma,
-        "epsilon": epsilon
-    }
+    # svr_params = {
+    #     "kernel": kernel,
+    #     "C": C,
+    #     "gamma": gamma,
+    #     "epsilon": epsilon
+    # }
 
-    # Jika kernel adalah Polynomial atau Sigmoid, tambahkan coef0
-    if kernel in ["poly", "sigmoid"]:
-        svr_params["coef0"] = coef0
+    # # Jika kernel adalah Polynomial atau Sigmoid, tambahkan coef0
+    # if kernel in ["poly", "sigmoid"]:
+    #     svr_params["coef0"] = coef0
 
-    # Jika kernel adalah Polynomial, tambahkan degree
-    if kernel == "poly":
-        svr_params["degree"] = degree
+    # # Jika kernel adalah Polynomial, tambahkan degree
+    # if kernel == "poly":
+    #     svr_params["degree"] = degree
 
-    svr = SVR(**svr_params)
+    # svr = SVR(**svr_params)
+    if kernel == "linear":
+        svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
+
+    elif kernel == "rbf":
+        svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+
+    elif kernel == "sigmoid":
+        svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+
+    elif kernel == "poly":
+        svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
+
     svr.fit(X_train, y_train)
 
     # Prediksi Harga

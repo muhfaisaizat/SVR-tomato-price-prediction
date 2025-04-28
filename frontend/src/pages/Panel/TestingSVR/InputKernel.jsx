@@ -10,7 +10,7 @@ import { API_URL } from "../../../helpers/networt";
 const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedKernel, setSelectedKernel] = useState("");
-    const [params, setParams] = useState({ C: "100", epsilon: "0.01", gamma: "0.1", degree: "3", coef0: "0" });
+    const [params, setParams] = useState({ C: "0", epsilon: "0", gamma: "0", degree: "0", coef0: "0" });
     
 
     const handleCheckboxChange = (kernel) => {
@@ -129,6 +129,9 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                                     name={key}
                                     value={params[key]} 
                                     onChange={handleChange} 
+                                    style={{
+                                        color: params[key] === 0 || params[key] === "0" ? "gray" : "black"
+                                      }}
                                 />
                             </div>
                         ))}
