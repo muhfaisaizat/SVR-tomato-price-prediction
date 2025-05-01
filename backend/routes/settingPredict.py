@@ -59,7 +59,7 @@ ALLOWED_FIELDS = {
     "rbf": ["nilai_c", "nilai_gamma", "nilai_epsilon", "status"]
 }
 
-# ✅ Update Setting by ID tanpa request body (Menggunakan Parameter)
+
 @settingPredict_router.put("/{setting_id}",dependencies=[Depends(verify_token)])
 async def update_setting(
     setting_id: int,
@@ -68,7 +68,7 @@ async def update_setting(
     nilai_epsilon: str = Query(None),
     nilai_degree: str = Query(None),
     nilai_coef: str = Query(None),
-    status: bool = Query(None)
+    
 ):
     # Cek apakah setting dengan ID tersebut ada
     query = select(settingPredict.c.nama_kernel).where(settingPredict.c.id == setting_id)
@@ -87,7 +87,7 @@ async def update_setting(
         "nilai_epsilon": nilai_epsilon,
         "nilai_degree": nilai_degree,
         "nilai_coef": nilai_coef,
-        "status": status
+        
     }
     
     # Filter hanya field yang diperbolehkan untuk kernel tersebut
@@ -105,3 +105,25 @@ async def update_setting(
 
     conn.commit()
     return {"message": "Setting updated successfully", "updated_fields": update_data}
+
+@settingPredict_router.put("/update-status/{setting_id}", dependencies=[Depends(verify_token)])
+async def update_status_setting(
+    setting_id: int,
+    status: bool = Query(...)
+):
+    # Cek apakah setting dengan ID tersebut ada
+    query = select(settingPredict.c.id).where(settingPredict.c.id == setting_id)
+    result = conn.execute(query).fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Setting not found")
+
+    # Update hanya status
+    query = update(settingPredict).where(settingPredict.c.id == setting_id).values(status=status)
+    result = conn.execute(query)
+
+    if result.rowcount == 0:
+        raise HTTPException(status_code=400, detail="Failed to update status")
+
+    conn.commit()
+    return {"message": "Status updated successfully", "updated_status": status}

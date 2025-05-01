@@ -85,14 +85,25 @@ def predict_price(db: Session = Depends(get_db)):
     coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
 
     # Inisialisasi Model SVR
+    # if kernel == "linear":
+    #     svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
+    # else:
+    #     svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
+    #     if kernel in ["poly", "sigmoid"]:
+    #         svr.coef0 = coef0
+    #     if kernel == "poly":
+    #         svr.degree = degree
     if kernel == "linear":
-        svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
-    else:
-        svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
-        if kernel in ["poly", "sigmoid"]:
-            svr.coef0 = coef0
-        if kernel == "poly":
-            svr.degree = degree
+        svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
+
+    elif kernel == "rbf":
+        svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+
+    elif kernel == "sigmoid":
+        svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+
+    elif kernel == "poly":
+        svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
     
     # **Melakukan Prediksi Rolling Window**
     hasil_prediksi = []
@@ -215,16 +226,28 @@ def get_price_history(
 
             # 8. Latih Model SVR dengan Kernel Linear
             # Inisialisasi Model SVR
-            if kernel == "linear":
-                svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
-            else:
-                svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
-                if kernel in ["poly", "sigmoid"]:
-                    svr.coef0 = coef0
-                if kernel == "poly":
-                    svr.degree = degree
+            # if kernel == "linear":
+            #     svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
+            # else:
+            #     svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
+            #     if kernel in ["poly", "sigmoid"]:
+            #         svr.coef0 = coef0
+            #     if kernel == "poly":
+            #         svr.degree = degree
             # svr = SVR(kernel='linear', C=1.0, epsilon=0.01)
             # svr = SVR(kernel='rbf', C=1.0, epsilon=0.01, gamma='scale')
+            if kernel == "linear":
+                svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
+
+            elif kernel == "rbf":
+                svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+
+            elif kernel == "sigmoid":
+                svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+
+            elif kernel == "poly":
+                svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
+
             svr.fit(X_train, y_train)
 
             # 9. Lakukan Prediksi pada Data Uji

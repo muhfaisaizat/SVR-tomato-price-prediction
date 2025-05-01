@@ -20,7 +20,7 @@ async def get_all_riwayat(db: Session = Depends(get_db)):
     try:
         query = select(riwayatPengujian, settingPredict.c.nama_kernel).join(
             settingPredict, riwayatPengujian.c.id_kernel == settingPredict.c.id
-        )
+        ).order_by(riwayatPengujian.c.id.desc())
         result = db.execute(query).fetchall()
         return [dict(row._mapping) for row in result]
     except SQLAlchemyError as e:
