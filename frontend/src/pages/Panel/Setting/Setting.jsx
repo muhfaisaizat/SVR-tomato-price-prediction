@@ -8,6 +8,7 @@ import { API_URL } from "../../../helpers/networt";
 import { useToast } from '@/hooks/use-toast';
 
 const Setting = () => {
+    const [isLoading, setIsLoading] = useState(false);
     const { toast } = useToast();
     const getemail = localStorage.getItem("email");
     const idUser = localStorage.getItem("idUser");
@@ -87,6 +88,7 @@ const Setting = () => {
     }
 
     const handleSaveDataKernel = async () => {
+        setIsLoading(true);
         const token = localStorage.getItem("token");
         console.log(selectedKernelfalse)
         console.log(selectedKernel)
@@ -166,6 +168,17 @@ const Setting = () => {
                 );
             }
 
+            const hasil = await axios.get(
+                `${API_URL}/predict/price`,
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Accept: "application/json",
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
             toast({
                 description: "Pengaturan model berhasil disimpan",
             });
@@ -178,6 +191,8 @@ const Setting = () => {
                 description: `${error.response.data.detail}`,
                 variant: "destructive",
             });
+        } finally {
+            setIsLoading(false); 
         }
     }
     return (
@@ -340,7 +355,7 @@ const Setting = () => {
                     </div>
                 </div>
                 <div>
-                    <Button className="xl:w-[80px] md:w-full w-full px-5 py-2 bg-gradient-to-r from-[#402412a8] to-[#9a070790]" onClick={handleSaveDataKernel}>simpan</Button>
+                    <Button className="xl:w-[80px] md:w-full w-full px-5 py-2 bg-gradient-to-r from-[#402412a8] to-[#9a070790]" onClick={handleSaveDataKernel} disabled={isLoading}> {isLoading ? "Diproses..." : "Simpan"}</Button>
                 </div>
             </div>
 
