@@ -69,7 +69,7 @@ const Preprocessing = ({ result }) => {
 
     const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "data_harga_tomat.xlsx");
+    saveAs(data, "preprocesing_data_harga_tomat.xlsx");
   };
 
 
