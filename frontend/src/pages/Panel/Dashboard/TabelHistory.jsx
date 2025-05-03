@@ -55,7 +55,7 @@ const TabelHistory = () => {
 
 
 
-  
+
 
   // Filter data berdasarkan pencarian
   const filteredData = data.filter(
@@ -73,7 +73,7 @@ const TabelHistory = () => {
   const currentData = filteredData.slice(startIndex, endIndex);
 
 
-  const handleDelete = async(id) => {
+  const handleDelete = async (id) => {
     // setDataHarga((prevData) => prevData.filter((item) => item.id !== id));
     const token = localStorage.getItem("token");
     try {
@@ -86,7 +86,7 @@ const TabelHistory = () => {
       toast({
         description: `${response.data.message}`,
       });
-      
+
     } catch (error) {
       toast({
         description: `${error.response.data.detail}`,
@@ -141,7 +141,7 @@ const TabelHistory = () => {
                     <TableCell className="text-center">{item.MAPE}%</TableCell>
                     <TableCell className="text-center">
                       <Button variant="destructive" size="sm" onClick={() => handleDelete(item.id)}>
-                        <Trash size={16}/>
+                        <Trash size={16} />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -162,6 +162,7 @@ const TabelHistory = () => {
               <h3 className="w-full">Menampilkan {filteredData.length} data</h3>
               <Pagination className="flex justify-end">
                 <PaginationContent>
+
                   <PaginationItem>
                     <PaginationPrevious
                       href="#"
@@ -170,17 +171,36 @@ const TabelHistory = () => {
                     />
                   </PaginationItem>
 
-                  {Array.from({ length: totalPages }, (_, index) => (
-                    <PaginationItem key={index}>
-                      <PaginationLink
-                        href="#"
-                        isActive={currentPage === index + 1}
-                        onClick={() => setCurrentPage(index + 1)}
-                      >
-                        {index + 1}
-                      </PaginationLink>
-                    </PaginationItem>
-                  ))}
+
+                  {(() => {
+                    let startPage = Math.max(1, currentPage - 1);
+                    let endPage = Math.min(totalPages, currentPage + 1);
+
+
+                    if (currentPage === 1) {
+                      endPage = Math.min(3, totalPages);
+                    }
+
+
+                    if (currentPage === totalPages) {
+                      startPage = Math.max(1, totalPages - 2);
+                    }
+
+                    return Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(
+                      (page) => (
+                        <PaginationItem key={page}>
+                          <PaginationLink
+                            href="#"
+                            isActive={currentPage === page}
+                            onClick={() => setCurrentPage(page)}
+                          >
+                            {page}
+                          </PaginationLink>
+                        </PaginationItem>
+                      )
+                    );
+                  })()}
+
 
                   <PaginationItem>
                     <PaginationNext
