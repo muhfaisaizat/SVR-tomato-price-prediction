@@ -76,7 +76,7 @@ const HasilPrediksi = ({ result }) => {
             <h1 className='text-[14px] font-semibold'>Hasil memprediksi Harga</h1>
             <p className='pr-[30px] text-[10px]'>Berikut hasil prediksi terhadap data uji:</p>
           </div>
-          <div className='xl:flex sm:grid gap-3'>
+          <div className='xl:flex grid gap-3'>
           <div className="relative w-full md:w-[308px] h-[32px]">
             <SearchNormal1 className="absolute left-[16px] top-1/2 transform -translate-y-1/2" size={16} />
             <Input
@@ -89,7 +89,7 @@ const HasilPrediksi = ({ result }) => {
               }}
             />
           </div>
-          <Button onClick={unduhExcel} className='h-[32px] bg-gradient-to-r from-[#402412a8] to-[#9a070790]'>unduh excel</Button>
+          <Button onClick={unduhExcel} className='h-[32px] xl:w-40 md:w-full w-full bg-gradient-to-r from-[#402412a8] to-[#9a070790]'>unduh excel</Button>
           </div>
         </div>
         <div className="">

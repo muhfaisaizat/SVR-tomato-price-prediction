@@ -81,7 +81,7 @@ const Preprocessing = ({ result }) => {
             <h1 className='text-[14px] font-semibold'>Preprocessing</h1>
             <p className='pr-[30px] text-[10px]'>Tahap ini dilakukan untuk mengubah kolom angka menjadi tipe numerik, menghapus nilai yang kosong, mengubah format tanggal menjadi format date time, menambahkan fitur baru Harga 2Hari Lalu sebagai tambahan informasi historis.</p>
           </div>
-          <div className='xl:flex sm:grid gap-3'>
+          <div className='xl:flex grid gap-3'>
           <div className="relative w-full md:w-[308px] h-[32px]">
             <SearchNormal1 className="absolute left-[16px] top-1/2 transform -translate-y-1/2" size={16} />
             <Input

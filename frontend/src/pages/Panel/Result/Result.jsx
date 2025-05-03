@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { SearchNormal1 } from "iconsax-react";
 import { Input } from "@/components/ui/input";
+import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
@@ -21,6 +22,8 @@ import {
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import axios from 'axios';
 import { API_URL } from "../../../helpers/networt";
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 
 
@@ -65,11 +68,27 @@ const Result = () => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentData = filteredData.slice(startIndex, endIndex);
 
+  const unduhExcel = () => {
+    if (dataHarga.length === 0) {
+      alert("Tidak ada data untuk diunduh.");
+      return;
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(dataHarga);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data Harga");
+
+    const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "hasil_prediksi_seluruh_data_harga_tomat.xlsx");
+  };
+
   return (
     <div className="w-full px-4 md:px-8 py-4 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <h1 className="text-lg font-semibold">Hasil Harga Prediksi</h1>
+        <div className='xl:flex grid gap-3'>
         <div className="relative w-full md:w-[308px] h-[40px]">
           <SearchNormal1 className="absolute left-4 top-1/2 transform -translate-y-1/2" size={16} />
           <Input
@@ -81,6 +100,8 @@ const Result = () => {
               setCurrentPage(1); // Reset ke halaman pertama saat pencarian berubah
             }}
           />
+        </div>
+        <Button onClick={unduhExcel} className='h-[40px] xl:w-40 md:w-full w-full bg-gradient-to-r from-[#402412a8] to-[#9a070790]'>unduh excel</Button>
         </div>
       </div>
 
