@@ -30,8 +30,10 @@ const Evaluasi = ({ result }) => {
 
     // Menyesuaikan format hiperparameter
     let infoHyperparameter = `C=${result.C}, epsilon=${result.Epsilon}`;
-    if (result.Kernel_Digunakan === 'rbf' || result.Kernel_Digunakan === 'sigmoid') {
+    if (result.Kernel_Digunakan === 'rbf' ) {
       infoHyperparameter += `, gamma=${result.Gamma}`;
+    } else if (result.Kernel_Digunakan === 'sigmoid') {
+      infoHyperparameter += `, gamma=${result.Gamma}, coef()=${result.Coef0}`;
     } else if (result.Kernel_Digunakan === 'poly') {
       infoHyperparameter += `, gamma=${result.Gamma}, degree=${result.Degree}, coef0=${result.Coef0}`;
     }
@@ -49,8 +51,10 @@ const Evaluasi = ({ result }) => {
 
   // Menyesuaikan tampilan hiperparameter
   let hyperparameters = `C=${result.C}, epsilon=${result.Epsilon}`;
-  if (result.Kernel_Digunakan === 'rbf' || result.Kernel_Digunakan === 'sigmoid') {
+  if (result.Kernel_Digunakan === 'rbf' ) {
     hyperparameters += `, gamma=${result.Gamma}`;
+  } else if (result.Kernel_Digunakan === 'sigmoid') {
+    hyperparameters += `, gamma=${result.Gamma}, coef()=${result.Coef0}`;
   } else if (result.Kernel_Digunakan === 'poly') {
     hyperparameters += `, gamma=${result.Gamma}, degree=${result.Degree}, coef0=${result.Coef0}`;
   }

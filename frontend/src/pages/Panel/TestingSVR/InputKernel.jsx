@@ -62,8 +62,10 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                 const tanggalSekarang = new Date().toISOString().split('T')[0];
 
                 let infoHyperparameter = `C=${params.C}, epsilon=${params.epsilon}`;
-                if (selectedKernel === 'rbf' || selectedKernel === 'sigmoid') {
+                if (selectedKernel === 'rbf' ) {
                     infoHyperparameter += `, gamma=${params.gamma}`;
+                } else if (selectedKernel === 'sigmoid') {
+                    infoHyperparameter += `, gamma=${params.gamma}, coef()=${params.coef0}`;
                 } else if (selectedKernel === 'poly') {
                     infoHyperparameter += `, gamma=${params.gamma}, degree=${params.degree}, coef0=${params.coef0}`;
                 }
