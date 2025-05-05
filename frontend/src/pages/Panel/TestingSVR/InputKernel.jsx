@@ -76,7 +76,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                     infoHyperparameter,
                     MAE: response.data.Evaluasi_Model?.MAE.toString(),
                     RMSE: response.data.Evaluasi_Model?.RMSE.toString(),
-                    MAPE: response.data.Evaluasi_Model?.MAPE.toFixed(2).toString()
+                    MAPE: (response.data.Evaluasi_Model?.MAPE * 100).toFixed(2).toString()
                 };
 
                 try {

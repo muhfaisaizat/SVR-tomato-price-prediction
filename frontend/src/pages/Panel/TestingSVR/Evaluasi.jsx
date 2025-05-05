@@ -78,7 +78,7 @@ const Evaluasi = ({ result }) => {
             <p>: {hyperparameters}</p>
             <p>: {result.Evaluasi_Model?.MAE}</p>
             <p>: {result.Evaluasi_Model?.RMSE}</p>
-            <p>: {result.Evaluasi_Model?.MAPE.toFixed(2)}%</p>
+            <p>: {(result.Evaluasi_Model?.MAPE * 100).toFixed(2)}%</p>
           </div>
         </div>
       </div>
