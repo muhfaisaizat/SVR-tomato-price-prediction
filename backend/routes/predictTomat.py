@@ -6,7 +6,7 @@ from sqlalchemy import select, insert, text, join, delete
 from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, mean_squared_error  
+from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error  
 from config.db import get_db, conn
 from models.index import priceTomat, settingPredict, resultPredict
 from datetime import datetime, timedelta
@@ -21,13 +21,28 @@ predict_router = APIRouter(
 @predict_router.get("/date")
 async def read_data(db: Session = Depends(get_db)):
     try:
-        query = text("SELECT tanggal FROM price_tomat ORDER BY tanggal DESC LIMIT 1;")
-        result = db.execute(query).fetchone()
-        
-        if result:
-            return {"tanggal": result[0]}
-        else:
-            return {"message": "No data found"}
+            query = text("""
+                SELECT 
+                (SELECT pt.tanggal 
+                FROM predict.price_tomat AS pt 
+                JOIN predict.result_predict AS rp ON pt.id = rp.id 
+                ORDER BY rp.id ASC 
+                LIMIT 1 OFFSET 30) AS tanggal_old,
+
+                (SELECT tanggal 
+                FROM predict.price_tomat 
+                ORDER BY tanggal DESC 
+                LIMIT 1) AS tanggal_new;
+            """)
+            result = db.execute(query).fetchone()
+            
+            if result:
+                return {
+                    "tanggal_old": result[0],  
+                    "tanggal_new": result[1]
+                }
+            else:
+                return {"message": "No data found"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -76,6 +91,15 @@ def predict_price(db: Session = Depends(get_db)):
         df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu', 'RataRata_Sekarang']]
     )
 
+    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu']].values
+    y = df['RataRata_Sekarang'].values
+    ids = df['id'].values
+    tanggal = df['Tanggal'].values
+
+    X_train, X_test, y_train, y_test, id_train, id_test, tanggal_train, tanggal_test = train_test_split(
+        X, y, ids, tanggal, test_size=0.2, shuffle=False
+    )
+
     # Ambil parameter model dari database
     kernel = settings.nama_kernel
     C = float(settings.nilai_c) if settings.nilai_c is not None else 1.0
@@ -110,41 +134,58 @@ def predict_price(db: Session = Depends(get_db)):
     X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu']].values
     y = df['RataRata_Sekarang'].values
     
-    # Latih model dengan semua data yang tersedia
-    svr.fit(X, y)
+    # # Latih model dengan semua data yang tersedia
+    # svr.fit(X, y)
     
-    # Prediksi harga untuk semua tanggal di masa depan
-    for i in range(len(df)):
-        fitur_input = X[i]
-        prediksi = svr.predict([fitur_input])[0]
-        hasil_prediksi.append(prediksi)
+    # # Prediksi harga untuk semua tanggal di masa depan
+    # for i in range(len(df)):
+    #     fitur_input = X[i]
+    #     prediksi = svr.predict([fitur_input])[0]
+    #     hasil_prediksi.append(prediksi)
+
+    # Latih model dengan data latih
+    svr.fit(X_train, y_train)
+
+    # Prediksi untuk data uji
+    y_pred = svr.predict(X_test)
     
     # Evaluasi Model
-    mae = mean_absolute_error(y, hasil_prediksi)
-    rmse = np.sqrt(mean_squared_error(y, hasil_prediksi))
-    mape = np.mean(np.abs((y - hasil_prediksi) / y)) * 100
-    
-    # Simpan hasil ke database
-    for i in range(len(hasil_prediksi)):
-        id_tomat = df.iloc[i]['id']  # Ambil ID dari tabel price_tomat
-        prediksi_value = float(scaler.inverse_transform([[0, 0, 0, 0, 0, hasil_prediksi[i]]])[0][5])
+    mae = mean_absolute_error(y_test, y_pred)
+    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+    mape = mean_absolute_percentage_error(y_test, y_pred)  
 
-        # Perbarui atau masukkan data baru
+    jumlah_data_dikirim = 0
+    
+    # Gabungkan hasil prediksi ke data uji
+    for i in range(len(y_pred)):
+        id_tomat = id_test[i]
+        tanggal_pred = tanggal_test[i]
+        hasil = y_pred[i]
+        hasil_asli = y_test[i]
+
+        # Invers hasil prediksi
+        dummy_row = np.zeros((1, 6))  # [0, 0, 0, 0, 0, hasil_prediksi]
+        dummy_row[0][5] = hasil
+        prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][5])
+
         existing = db.execute(select(resultPredict).where(resultPredict.c.id == id_tomat)).fetchone()
         if existing:
             db.execute(
                 resultPredict.update()
                 .where(resultPredict.c.id == id_tomat)
-                .values(hasil_prediksi=prediksi_value)
+                .values(hasil_prediksi=prediksi_asli)
             )
         else:
-            db.execute(insert(resultPredict).values(id=id_tomat, hasil_prediksi=prediksi_value))
+            db.execute(insert(resultPredict).values(id=id_tomat, hasil_prediksi=prediksi_asli))
+
+        jumlah_data_dikirim += 1
 
     db.commit()
     
     return {
         "Kernel": kernel,
         "Evaluasi": { "MAE": mae, "RMSE": rmse, "MAPE": mape },
+         "Jumlah_data_dikirim": jumlah_data_dikirim,
         "Pesan": "Prediksi seluruh data berhasil disimpan ke database"
     }
 
@@ -256,7 +297,7 @@ def get_price_history(
             # 10. Evaluasi Model
             mae = mean_absolute_error(y_test, y_pred)
             rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-            mape = np.mean(np.abs((y_test - y_pred) / y_test)) * 100
+            mape = mape = mean_absolute_percentage_error(y_test, y_pred)
 
 
             # 11. Prediksi 30 Hari ke Depan
@@ -311,7 +352,7 @@ def get_price_history(
 
         else:
             # Ambil data historis jika tanggal bukan yang terbaru
-            start_date = tanggal_input - timedelta(days=30)
+            start_date = tanggal_input - timedelta(days=29)
             end_date = tanggal_input
 
             query = (

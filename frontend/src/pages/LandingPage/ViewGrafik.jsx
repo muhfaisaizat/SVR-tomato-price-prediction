@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { format, parseISO, isAfter, startOfDay } from "date-fns";
+import { format, parseISO, isBefore, isAfter, startOfDay } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -43,6 +43,8 @@ import { useToast } from '@/hooks/use-toast';
 const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPriceType, chartData, setChartData, setTabelDataAktual, setTabelDataPredict }) => {
     const { toast } = useToast();
     const [dateTerbaru, setDateTerbaru] = useState(null);
+    const [dateTerlama, setDateTerlama] = useState(null);
+    const oldestDate = dateTerlama ? parseISO(dateTerlama) : null;
     const latestDate = dateTerbaru ? parseISO(dateTerbaru) : null;
 
     const handleDateChange = (selectedDate) => setDate(selectedDate);
@@ -52,8 +54,9 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
         try {
             const response = await axios.get(`${API_URL}/predict/date`);
 
-            console.log(response.data.tanggal)
-            setDateTerbaru(response.data.tanggal)
+            console.log(response.data.tanggal_old)
+            setDateTerbaru(response.data.tanggal_new)
+            setDateTerlama(response.data.tanggal_old)
         } catch (error) {
             console.error("Error fetching data", error);
         }
@@ -119,7 +122,12 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
                                         onSelect={handleDateChange}
                                         initialFocus
                                         defaultMonth={latestDate}
-                                        disabled={(day) => latestDate && isAfter(startOfDay(day), latestDate)}
+                                        disabled={(day) =>
+                                            // Nonaktifkan tanggal SETELAH tanggal terbaru
+                                            (latestDate && isAfter(startOfDay(day), latestDate)) ||
+                                            // Nonaktifkan tanggal SEBELUM tanggal terlama
+                                            (oldestDate && isBefore(startOfDay(day), oldestDate))
+                                        }
                                     />
                                 </PopoverContent>
                             </Popover>
