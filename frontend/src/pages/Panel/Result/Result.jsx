@@ -121,8 +121,8 @@ const Result = () => {
                 currentData.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell className="text-center">{item.tanggal}</TableCell>
-                    <TableCell className="text-center">Rp.{item.harga_aktual}</TableCell>
-                    <TableCell className="text-center">Rp.{item.harga_prediksi}</TableCell>
+                    <TableCell className="text-center">Rp. {new Intl.NumberFormat("id-ID").format(item.harga_aktual)}</TableCell>
+                    <TableCell className="text-center">Rp. {new Intl.NumberFormat("id-ID").format(item.harga_prediksi)}</TableCell>
                   </TableRow>
                 ))
               ) : (
