@@ -142,7 +142,7 @@ const Login = () => {
                     <Button onClick={resetPassword} className="w-full bg-gradient-to-r from-[#402412a8] to-[#9a070790]">Simpan</Button>
                   </>
                 )}
-                <Button variant="outline" onClick={() => { setShowForgotPassword(false); setEmailExists(false); setError(""); }}>Kembali ke Login</Button>
+                <Button variant="outline" onClick={() => { setShowForgotPassword(false); setEmailExists(false); setError(""); setNewPassword(""); setNewPasswordConfrim(""); }}>Kembali ke Login</Button>
               </div>
             ) : (
               <form onSubmit={handleLogin} className="flex flex-col gap-6">
@@ -156,6 +156,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    onInvalid={(e) => e.target.setCustomValidity('Email wajib diisi')}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -163,7 +164,7 @@ const Login = () => {
                     <Label htmlFor="password">Password</Label>
                     <button
                       type="button"
-                      onClick={() => setShowForgotPassword(true)}
+                      onClick={() => {setShowForgotPassword(true); setError("");}}
                       className="ml-auto text-sm underline-offset-4 hover:underline"
                     >
                       Lupa password?
@@ -175,6 +176,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    onInvalid={(e) => e.target.setCustomValidity('Password wajib diisi')}
                   />
                 </div>
                 {error && <p className="text-red-500 text-sm">{error}</p>}
