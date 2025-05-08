@@ -5,7 +5,7 @@ from models.index import users
 from schemas.index import User
 from middleware.index import verify_token
 
-# # 🔹 Seeder untuk Admin
+# #  Seeder untuk Admin
 # def seed_admin():
 #     admin_email = "admin@gmail.com"
 #     admin_password = "Admin123"
@@ -25,20 +25,20 @@ from middleware.index import verify_token
 #             role=admin_role
 #         ))
 #         conn.commit()
-#         print("✅ Admin user berhasil ditambahkan!")
+#         print("Admin user berhasil ditambahkan!")
 #     else:
-#         print("⚠️ Admin user sudah ada, tidak perlu ditambahkan.")
+#         print("Admin user sudah ada, tidak perlu ditambahkan.")
 
 # # Panggil Seeder saat file dijalankan
 # seed_admin()
 
-# 🔹 Definisi Router
+#  Definisi Router
 user_router = APIRouter(
     prefix="/users",  
     tags=["Users"]    
 )
 
-# 🔹 READ ALL USERS
+#  READ ALL USERS
 @user_router.get("/",dependencies=[Depends(verify_token)])
 async def read_data():
     try:
@@ -47,7 +47,7 @@ async def read_data():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 🔹 READ USER BY ID
+#  READ USER BY ID
 @user_router.get("/{id}",dependencies=[Depends(verify_token)])
 async def read_data(id: int):
     try:
@@ -58,7 +58,7 @@ async def read_data(id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 🔹 CREATE USER
+#  CREATE USER
 @user_router.post("/",dependencies=[Depends(verify_token)])
 async def write_data(user: User):
     try:
@@ -69,7 +69,7 @@ async def write_data(user: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 🔹 UPDATE USER
+#  UPDATE USER
 @user_router.put("/{id}",dependencies=[Depends(verify_token)])
 async def update_data(id: int, user: User):
     try:
@@ -86,7 +86,7 @@ async def update_data(id: int, user: User):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# 🔹 DELETE USER
+#  DELETE USER
 @user_router.delete("/{id}",dependencies=[Depends(verify_token)])
 async def delete_data(id: int):
     try:
