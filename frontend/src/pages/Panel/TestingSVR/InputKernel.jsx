@@ -11,10 +11,17 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedKernel, setSelectedKernel] = useState("");
     const [params, setParams] = useState({ C: "0", epsilon: "0", gamma: "0", degree: "0", coef0: "0" });
-    
+    const kernelParamsMap = {
+        linear: ['C', 'epsilon'],
+        rbf: ['C', 'epsilon', 'gamma'],
+        sigmoid: ['C', 'epsilon', 'gamma', 'coef0'],
+        poly: ['C', 'epsilon', 'gamma', 'coef0', 'degree']
+    };
+
 
     const handleCheckboxChange = (kernel) => {
         setSelectedKernel(kernel);
+        setParams({ C: "0", epsilon: "0", gamma: "0", degree: "0", coef0: "0" });
     };
 
     const handleChange = (e) => {
@@ -52,7 +59,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                     poly: 2,
                     rbf: 4
                 };
-                
+
                 const id_kernel = kernelMapping[selectedKernel];
                 if (!id_kernel) {
                     console.error("Kernel tidak ditemukan:", selectedKernel);
@@ -62,7 +69,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                 const tanggalSekarang = new Date().toISOString().split('T')[0];
 
                 let infoHyperparameter = `C=${params.C}, epsilon=${params.epsilon}`;
-                if (selectedKernel === 'rbf' ) {
+                if (selectedKernel === 'rbf') {
                     infoHyperparameter += `, gamma=${params.gamma}`;
                 } else if (selectedKernel === 'sigmoid') {
                     infoHyperparameter += `, gamma=${params.gamma}, coef()=${params.coef0}`;
@@ -81,7 +88,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
 
                 try {
                     await axios.post(`${API_URL}/riwayat/`, postData, {
-                        headers: { 
+                        headers: {
                             'Content-Type': 'application/json',
                             Authorization: `Bearer ${token}`,
                         }
@@ -94,7 +101,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
         } catch (error) {
             console.error("Error fetching data:", error);
             setIsLoading(false);
-        } 
+        }
     };
 
     return (
@@ -107,9 +114,9 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                         <div className="flex flex-wrap gap-3 px-5">
                             {["linear", "poly", "sigmoid", "rbf"].map((kernel) => (
                                 <div key={kernel} className="flex items-center space-x-2 xl:w-1/4 md:w-full w-full">
-                                    <Checkbox 
-                                        id={kernel} 
-                                        checked={selectedKernel === kernel} 
+                                    <Checkbox
+                                        id={kernel}
+                                        checked={selectedKernel === kernel}
                                         onCheckedChange={() => handleCheckboxChange(kernel)}
                                     />
                                     <label htmlFor={kernel} className="text-sm cursor-pointer">
@@ -122,21 +129,24 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                 </div>
                 <div className="xl:w-[70%] md:w-full w-full px-5 py-2">
                     <div className="grid grid-cols-auto-fit md:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {Object.keys(params).map((key) => (
-                            <div key={key} className="grid w-full items-center gap-1.5">
-                                <Label>Masukan nilai {key}</Label>
-                                <Input 
-                                    type="text" 
-                                    placeholder={`nilai ${key}`} 
-                                    name={key}
-                                    value={params[key]} 
-                                    onChange={handleChange} 
-                                    style={{
-                                        color: params[key] === 0 || params[key] === "0" ? "gray" : "black"
-                                      }}
-                                />
-                            </div>
-                        ))}
+                        {Object.keys(params).map((key) => {
+                            const isEnabled = kernelParamsMap[selectedKernel]?.includes(key);
+                            return (
+                                <div key={key} className="grid w-full items-center gap-1.5">
+                                    <Label>Masukan nilai {key}</Label>
+                                    <Input
+                                        type="text"
+                                        placeholder={`nilai ${key}`}
+                                        name={key}
+                                        value={params[key]}
+                                        onChange={handleChange}
+                                        disabled={!isEnabled}
+                                        className={!isEnabled ? 'opacity-50 cursor-not-allowed' : ''}
+                                    />
+                                </div>
+                            );
+                        })}
+
                     </div>
                 </div>
             </div>
@@ -150,7 +160,7 @@ const InputKernel = ({ setShowProses, dataHarga, result, setResult }) => {
                     {isLoading ? 'Memproses...' : 'Proses'}
                 </Button>
             </div>
-           
+
         </div>
     );
 };
