@@ -10,15 +10,15 @@ import BgTomat from '../../assets/bg-tomat.png'
 const LandingPage = () => {
   const [date, setDate] = useState(null);
   const [dataYAxis, setDataYAxis] = useState([11000, 15000]);
-  const [priceType, setPriceType] = useState("all");
+  const [priceType, setPriceType] = useState("");
   const [chartData, setChartData] = useState([]);
   const [tabelDataAktual, setTabelDataAktual] = useState([]);
   const [tabelDataPredict, setTabelDataPredict] = useState([]);
 
   return (
-    <ScrollArea 
-    className="h-screen w-full bg-cover bg-center bg-no-repeat relative bg-white bg-opacity-15 " 
-    style={{ backgroundImage:  `url(${BgTomat})`  }}
+    <ScrollArea
+      className="h-screen w-full bg-cover bg-center bg-no-repeat relative bg-white bg-opacity-15 "
+      style={{ backgroundImage: `url(${BgTomat})` }}
     >
       <div className=' grid gap-7 '>
         <Navbar />
@@ -31,21 +31,33 @@ const LandingPage = () => {
               <h2 className='text-[14px] font-bold text-white '>Tabel Harga Tomat Konsumen dari Tanggal Terpilih</h2>
             </div>
             <div className='px-[10%] '>
-              
-                <div className=' border  rounded-[20px] bg-[#ffffff81]  px-[10px] py-[10px]'>
+
+              <div className=' border  rounded-[20px] bg-[#ffffff81]  px-[10px] py-[10px]'>
                 <ScrollArea>
                   <div className='flex gap-[20px] rounded-[18px] bg-white px-[30px] py-[10px]'>
-                  {tabelDataAktual.length > 0 && <TableAktual tabelDataAktual={tabelDataAktual} />}
-                  {tabelDataPredict.length > 0 && <TablePrediksi tabelDataPredict={tabelDataPredict} />}
+                    {priceType === "all" && (
+                      <>
+                        {tabelDataAktual.length > 0 && <TableAktual tabelDataAktual={tabelDataAktual} />}
+                        {tabelDataPredict.length > 0 && <TablePrediksi tabelDataPredict={tabelDataPredict} />}
+                      </>
+                    )}
+
+                    {priceType === "actual" && tabelDataAktual.length > 0 && (
+                      <TableAktual tabelDataAktual={tabelDataAktual} />
+                    )}
+
+                    {priceType === "predicted" && tabelDataPredict.length > 0 && (
+                      <TablePrediksi tabelDataPredict={tabelDataPredict} />
+                    )}
                   </div>
                   <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </div>
-              
+                </ScrollArea>
+              </div>
+
             </div>
           </div>
         )}
-   
+
 
       </div>
       <Toaster />

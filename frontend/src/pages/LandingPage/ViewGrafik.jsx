@@ -46,9 +46,10 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
     const [dateTerlama, setDateTerlama] = useState(null);
     const oldestDate = dateTerlama ? parseISO(dateTerlama) : null;
     const latestDate = dateTerbaru ? parseISO(dateTerbaru) : null;
+    const [tempPriceType, setTempPriceType] = useState("");
 
     const handleDateChange = (selectedDate) => setDate(selectedDate);
-    const handlePriceTypeChange = (value) => setPriceType(value);
+    const handlePriceTypeChange = (value) => setTempPriceType(value);
 
     const fetchDataDate = async () => {
         try {
@@ -67,7 +68,31 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
     }, []);
 
     const fetchData = async () => {
+
+        const formattedDate = format(date, "yyyy-MM-dd");
+        
+        if (!date && !tempPriceType) {
+
+            setTabelDataAktual([]);
+            setTabelDataPredict([]);
+            setPriceType("");
+            setChartData([]);
+            setDataYAxis([11000, 15000]);
+
+            toast({
+                description: "tanggal dan harga harus di isi!",
+                variant: "destructive",
+            });
+            return;
+        }
+
         if (!date) {
+
+            setTabelDataAktual([]);
+            setTabelDataPredict([]);
+            setPriceType("");
+            setChartData([]);
+            setDataYAxis([11000, 15000]);
 
             toast({
                 description: "Pilih tanggal terlebih dahulu!",
@@ -76,16 +101,63 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
             return;
         }
 
-        const formattedDate = format(date, "yyyy-MM-dd");
+
+        if (formattedDate==dateTerbaru && tempPriceType=="all") {
+
+            setTabelDataAktual([]);
+            setTabelDataPredict([]);
+            setPriceType("");
+            setChartData([]);
+            setDataYAxis([11000, 15000]);
+
+            toast({
+                description: "tanggal ini hanya ada data prediksi",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (formattedDate==dateTerbaru && tempPriceType=="actual") {
+
+            setTabelDataAktual([]);
+            setTabelDataPredict([]);
+            setPriceType("");
+            setChartData([]);
+            setDataYAxis([11000, 15000]);
+
+            toast({
+                description: "tanggal ini hanya ada data prediksi",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        if (!tempPriceType) {
+
+            setTabelDataAktual([]);
+            setTabelDataPredict([]);
+            setPriceType("");
+            setChartData([]);
+            setDataYAxis([11000, 15000]);
+
+            toast({
+                description: "Pilih harga terlebih dahulu!",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        
 
         try {
-            const response = await axios.get(`${API_URL}/predict/history?tanggal=${formattedDate}&data_type=${priceType}`);
+            const response = await axios.get(`${API_URL}/predict/history?tanggal=${formattedDate}&data_type=${tempPriceType}`);
             const formattedData = response.data.dataGrafik.map(item => ({
                 date: item.tanggal,
                 actual: item.harga_aktual,
                 predicted: item.harga_prediksi
             }));
 
+            setPriceType(tempPriceType);
             setDataYAxis(response.data.YAxis);
             setChartData(formattedData);
             setTabelDataAktual(response.data.dataTableAktual);
