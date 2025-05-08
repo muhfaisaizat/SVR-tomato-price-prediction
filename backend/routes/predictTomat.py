@@ -252,18 +252,6 @@ def get_price_history(
             degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
             coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
 
-            # 8. Latih Model SVR dengan Kernel Linear
-            # Inisialisasi Model SVR
-            # if kernel == "linear":
-            #     svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
-            # else:
-            #     svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
-            #     if kernel in ["poly", "sigmoid"]:
-            #         svr.coef0 = coef0
-            #     if kernel == "poly":
-            #         svr.degree = degree
-            # svr = SVR(kernel='linear', C=1.0, epsilon=0.01)
-            # svr = SVR(kernel='rbf', C=1.0, epsilon=0.01, gamma='scale')
             if kernel == "linear":
                 svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
 
@@ -288,14 +276,14 @@ def get_price_history(
 
 
             # 11. Prediksi 30 Hari ke Depan
-            last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns)  # ✅ Gunakan DataFrame
+            last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns) 
 
             predictions = []
             for _ in range(7):
                 pred = svr.predict(last_data)[0]
                 predictions.append(pred)
 
-                # ✅ Update input dengan DataFrame, bukan NumPy array
+                #  Update input dengan DataFrame, bukan NumPy array
                 last_data = pd.DataFrame([[last_data.iloc[0, 1], last_data.iloc[0, 2], last_data.iloc[0, 3], pred]], columns=X.columns)
 
             # 12. Konversi hasil prediksi ke skala asli

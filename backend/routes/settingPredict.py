@@ -48,7 +48,7 @@ async def seed_database():
     conn.execute(query)
     conn.commit()
     
-    return {"message": "✅ Seeder berhasil dijalankan: Data setting_predict sudah diisi."}
+    return {"message": " Seeder berhasil dijalankan: Data setting_predict sudah diisi."}
 
 
 # Mapping kernel ke kolom yang bisa diupdate

@@ -14,7 +14,7 @@ riwayat_router = APIRouter(
     tags=["Riwayat Pengujian SVR"]    
 )
 
-# ✅ Get all riwayat pengujian
+#  Get all riwayat pengujian
 @riwayat_router.get("/", dependencies=[Depends(verify_token)])
 async def get_all_riwayat(db: Session = Depends(get_db)):
     try:
@@ -25,14 +25,14 @@ async def get_all_riwayat(db: Session = Depends(get_db)):
         return [dict(row._mapping) for row in result]
     except SQLAlchemyError as e:
         db.rollback()
-        print("🔥 ERROR Database:", str(e))
+        print(" ERROR Database:", str(e))
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan pada database: {str(e)}")
     except Exception as e:
-        print("🔥 ERROR tidak terduga:", str(e))
+        print(" ERROR tidak terduga:", str(e))
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan: {str(e)}")
 
 
-# ✅ Get riwayat pengujian by ID
+#  Get riwayat pengujian by ID
 @riwayat_router.get("/{id}", dependencies=[Depends(verify_token)])
 async def get_riwayat_by_id(id: int):
     query = select(riwayatPengujian).where(riwayatPengujian.c.id == id)
@@ -41,7 +41,7 @@ async def get_riwayat_by_id(id: int):
         return dict(result._mapping)
     raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
 
-# ✅ Create new riwayat pengujian
+#  Create new riwayat pengujian
 @riwayat_router.post("/", dependencies=[Depends(verify_token)])
 async def create_riwayat(data: RiwayatPengujian):
     query = insert(riwayatPengujian).values(
@@ -56,7 +56,7 @@ async def create_riwayat(data: RiwayatPengujian):
     conn.commit()
     return {"message": "Riwayat Pengujian berhasil ditambahkan"}
 
-# ✅ Update riwayat pengujian by ID
+#  Update riwayat pengujian by ID
 @riwayat_router.put("/{id}", dependencies=[Depends(verify_token)])
 async def update_riwayat(id: int, data: RiwayatPengujian):
     query = update(riwayatPengujian).where(riwayatPengujian.c.id == id).values(
@@ -75,7 +75,7 @@ async def update_riwayat(id: int, data: RiwayatPengujian):
     
     return {"message": "Riwayat Pengujian berhasil diperbarui"}
 
-# ✅ Delete riwayat pengujian by ID
+#  Delete riwayat pengujian by ID
 @riwayat_router.delete("/{id}", dependencies=[Depends(verify_token)])
 async def delete_riwayat(id: int):
     query = delete(riwayatPengujian).where(riwayatPengujian.c.id == id)

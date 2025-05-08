@@ -15,7 +15,7 @@ priceTomat_router = APIRouter(
     tags=["Price Tomat"]  
 )
 
-# 🔹 GET: Ambil semua data harga tomat
+
 @priceTomat_router.get("/", dependencies=[Depends(verify_token)])
 def get_prices(db=Depends(get_db)):
     try:
