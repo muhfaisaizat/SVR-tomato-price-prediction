@@ -27,7 +27,7 @@ async def read_data(db: Session = Depends(get_db)):
                 FROM predict.price_tomat AS pt 
                 JOIN predict.result_predict AS rp ON pt.id = rp.id 
                 ORDER BY rp.id ASC 
-                LIMIT 1 OFFSET 30) AS tanggal_old,
+                LIMIT 1 OFFSET 29) AS tanggal_old,
 
                 (SELECT tanggal 
                 FROM predict.price_tomat 
@@ -78,20 +78,25 @@ def predict_price(db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Data tidak cukup untuk melakukan prediksi")
     
     # Preprocessing data
-    df['RataRata_Kemarin'] = pd.to_numeric(df['RataRata_Kemarin'], errors='coerce')
-    df['RataRata_Sekarang'] = pd.to_numeric(df['RataRata_Sekarang'], errors='coerce')
+    kolom_numerik = ['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']
+    df[kolom_numerik] = df[kolom_numerik].apply(pd.to_numeric, errors='coerce')
+    df[kolom_numerik] = df[kolom_numerik].replace(0, np.nan)
+    # Interpolasi nilai kosong (0 yang sudah jadi NaN)
+    df[kolom_numerik] = df[kolom_numerik].interpolate(method='linear', limit_direction='both')
+    # Drop jika masih ada NaN (misalnya di ujung data)
     df.dropna(inplace=True)
+
     df['Tanggal'] = pd.to_datetime(df['Tanggal'])
-    df['RataRata_2Hari_Lalu'] = df['RataRata_Kemarin'].shift(1)
+    # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
     df.dropna(inplace=True)
     
     # Normalisasi Data
     scaler = StandardScaler()
-    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu', 'RataRata_Sekarang']] = scaler.fit_transform(
-        df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu', 'RataRata_Sekarang']]
+    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']] = scaler.fit_transform(
+        df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']]
     )
 
-    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu']].values
+    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', ]].values
     y = df['RataRata_Sekarang'].values
     ids = df['id'].values
     tanggal = df['Tanggal'].values
@@ -108,15 +113,6 @@ def predict_price(db: Session = Depends(get_db)):
     degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
     coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
 
-    # Inisialisasi Model SVR
-    # if kernel == "linear":
-    #     svr = SVR(kernel=kernel, C=C, epsilon=epsilon)
-    # else:
-    #     svr = SVR(kernel=kernel, C=C, gamma=gamma, epsilon=epsilon)
-    #     if kernel in ["poly", "sigmoid"]:
-    #         svr.coef0 = coef0
-    #     if kernel == "poly":
-    #         svr.degree = degree
     if kernel == "linear":
         svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
 
@@ -129,19 +125,6 @@ def predict_price(db: Session = Depends(get_db)):
     elif kernel == "poly":
         svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
     
-    # **Melakukan Prediksi Rolling Window**
-    hasil_prediksi = []
-    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_2Hari_Lalu']].values
-    y = df['RataRata_Sekarang'].values
-    
-    # # Latih model dengan semua data yang tersedia
-    # svr.fit(X, y)
-    
-    # # Prediksi harga untuk semua tanggal di masa depan
-    # for i in range(len(df)):
-    #     fitur_input = X[i]
-    #     prediksi = svr.predict([fitur_input])[0]
-    #     hasil_prediksi.append(prediksi)
 
     # Latih model dengan data latih
     svr.fit(X_train, y_train)
@@ -159,14 +142,12 @@ def predict_price(db: Session = Depends(get_db)):
     # Gabungkan hasil prediksi ke data uji
     for i in range(len(y_pred)):
         id_tomat = id_test[i]
-        tanggal_pred = tanggal_test[i]
         hasil = y_pred[i]
-        hasil_asli = y_test[i]
 
         # Invers hasil prediksi
-        dummy_row = np.zeros((1, 6))  # [0, 0, 0, 0, 0, hasil_prediksi]
-        dummy_row[0][5] = hasil
-        prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][5])
+        dummy_row = np.zeros((1, 5))  # [0, 0, 0, 0, 0, hasil_prediksi]
+        dummy_row[0][4] = hasil
+        prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
 
         existing = db.execute(select(resultPredict).where(resultPredict.c.id == id_tomat)).fetchone()
         if existing:
@@ -214,7 +195,7 @@ def get_price_history(
         latest_date = latest_date_query[0]  # Ambil tanggal terbaru
         
         if tanggal_input == latest_date:
-            # **Melakukan Prediksi 30 Hari ke Depan**
+            # **Melakukan Prediksi 7 Hari ke Depan**
             settings = db.execute(select(settingPredict).where(settingPredict.c.status == True)).fetchone()
             if not settings:
                 raise HTTPException(status_code=400, detail="Tidak ada konfigurasi prediksi yang aktif")
@@ -237,11 +218,17 @@ def get_price_history(
                 raise HTTPException(status_code=400, detail="Data tidak cukup untuk melakukan prediksi")
 
             # Preprocessing
-            # 3. Perbaiki Format Tanggal
-            df['Tanggal'] = pd.to_datetime(df['Tanggal'], dayfirst=True, errors='coerce')
+            kolom_numerik = ['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']
+            df[kolom_numerik] = df[kolom_numerik].apply(pd.to_numeric, errors='coerce')
+            df[kolom_numerik] = df[kolom_numerik].replace(0, np.nan)
+            # Interpolasi nilai kosong (0 yang sudah jadi NaN)
+            df[kolom_numerik] = df[kolom_numerik].interpolate(method='linear', limit_direction='both')
+            # Drop jika masih ada NaN (misalnya di ujung data)
+            df.dropna(inplace=True)
 
-            # 4. Hapus Data yang Gagal Dikoreksi (jika ada)
-            df = df.dropna(subset=['Tanggal']).reset_index(drop=True)
+            df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+            # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
+            df.dropna(inplace=True)
 
            # 6. Normalisasi Data
             # scaler = MinMaxScaler()

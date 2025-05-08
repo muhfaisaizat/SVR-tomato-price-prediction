@@ -88,7 +88,7 @@ const SplitData = ({ result }) => {
           <div className='grid gap-3 items-center'>
             <h1 className='text-[14px] font-semibold'>Memisahkan Data Latih dan Uji</h1>
             <p className='pr-[30px] text-[10px]'>Data dibagi menjadi dua bagian:</p>
-            <p className='pr-[30px] text-[10px]'>X: Fitur yang digunakan untuk memprediksi (Pasar Bandung, Pasar Ngunut, Pasar Ngemplak, Harga Rata Rata Kemarin, Harga 2Hari Lalu).</p>
+            <p className='pr-[30px] text-[10px]'>X: Fitur yang digunakan untuk memprediksi (Pasar Bandung, Pasar Ngunut, Pasar Ngemplak, Harga Rata Rata Kemarin).</p>
             <p className='pr-[30px] text-[10px]'>y: Target yang akan diprediksi (Harga Rata Rata Sekarang).</p>
           </div>
 
@@ -102,7 +102,7 @@ const SplitData = ({ result }) => {
                 <TableHead className="text-center font-bold text-black">Pasar Ngunut</TableHead>
                 <TableHead className="text-center font-bold text-black">Pasar Ngemplak</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Kemarin</TableHead>
-                <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead>
+                {/* <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white">
@@ -113,7 +113,7 @@ const SplitData = ({ result }) => {
                     <TableCell className="text-center">{item.Pasar_Ngunut}</TableCell>
                     <TableCell className="text-center">{item.Pasar_Ngemplak}</TableCell>
                     <TableCell className="text-center">{item.Harga_Kemarin}</TableCell>
-                    <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell>
+                    {/* <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell> */}
                   </TableRow>
                 ))
               ) : (
@@ -193,7 +193,7 @@ const SplitData = ({ result }) => {
                 <TableHead className="text-center font-bold text-black">Pasar Ngunut</TableHead>
                 <TableHead className="text-center font-bold text-black">Pasar Ngemplak</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Kemarin</TableHead>
-                <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead>
+                {/* <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white">
@@ -204,7 +204,7 @@ const SplitData = ({ result }) => {
                     <TableCell className="text-center">{item.Pasar_Ngunut}</TableCell>
                     <TableCell className="text-center">{item.Pasar_Ngemplak}</TableCell>
                     <TableCell className="text-center">{item.Harga_Kemarin}</TableCell>
-                    <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell>
+                    {/* <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell> */}
                   </TableRow>
                 ))
               ) : (

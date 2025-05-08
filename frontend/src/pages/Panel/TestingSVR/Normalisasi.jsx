@@ -58,7 +58,7 @@ const Normalisasi = ({ result }) => {
         <div className='flex justify-between items-center mb-5'>
           <div className='grid gap-3 items-center'>
             <h1 className='text-[14px] font-semibold'>Normalisasi Data</h1>
-            <p className='pr-[30px] text-[10px]'>Tahap ini data dinormalisasi menggunakan StandardScaler agar semua nilai berada dalam rentang -0 hingga 1</p>
+            <p className='pr-[30px] text-[10px]'>Tahap ini data dinormalisasi menggunakan StandardScaler agar semua nilai berada dalam rentang negatif dan positif </p>
           </div>
           <div className="relative w-full md:w-[308px] h-[32px]">
             <SearchNormal1 className="absolute left-[16px] top-1/2 transform -translate-y-1/2" size={16} />
@@ -84,7 +84,7 @@ const Normalisasi = ({ result }) => {
                 <TableHead className="text-center font-bold text-black">Pasar Ngemplak</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Kemarin</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Sekarang</TableHead>
-                <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead>
+                {/* <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white">
@@ -97,7 +97,7 @@ const Normalisasi = ({ result }) => {
                     <TableCell className="text-center">{item.Pasar_Ngemplak}</TableCell>
                     <TableCell className="text-center">{item.Harga_Kemarin}</TableCell>
                     <TableCell className="text-center">{item.Harga_Sekarang}</TableCell>
-                    <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell>
+                    {/* <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell> */}
                   </TableRow>
                 ))
               ) : (

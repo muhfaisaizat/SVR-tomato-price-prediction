@@ -50,29 +50,35 @@ def predict_price(
         raise HTTPException(status_code=400, detail="Data tidak cukup untuk melakukan prediksi")
     
     # Preprocessing
-    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']] = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']].apply(pd.to_numeric, errors='coerce')
+    # Pastikan semua kolom numerik
+    kolom_numerik = ['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']
+    df[kolom_numerik] = df[kolom_numerik].apply(pd.to_numeric, errors='coerce')
+    df[kolom_numerik] = df[kolom_numerik].replace(0, np.nan)
+    # Interpolasi nilai kosong (0 yang sudah jadi NaN)
+    df[kolom_numerik] = df[kolom_numerik].interpolate(method='linear', limit_direction='both')
+    # Drop jika masih ada NaN (misalnya di ujung data)
     df.dropna(inplace=True)
-    df['Tanggal'] = pd.to_datetime(df['Tanggal'])
-    df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
-    # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1).bfill()
-    df.dropna(inplace=True)
+
+    # df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+   
+    # df.dropna(inplace=True)
 
     # Simpan hasil preprocessing
     hasil_preprocessing = df.to_dict(orient='records')
 
     # Normalisasi Data
     # scaler = MinMaxScaler()
-    # df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_2Hari_Lalu', 'Harga_Sekarang']] = scaler.fit_transform(df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_2Hari_Lalu', 'Harga_Sekarang']])
+    # df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin',  'Harga_Sekarang']] = scaler.fit_transform(df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']])
 
     scaler = StandardScaler()
-    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_2Hari_Lalu', 'Harga_Sekarang']] = scaler.fit_transform(df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_2Hari_Lalu', 'Harga_Sekarang']])
+    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin',  'Harga_Sekarang']] = scaler.fit_transform(df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin',  'Harga_Sekarang']])
 
 
     # Simpan hasil normalisasi
     hasil_normalisasi = df.to_dict(orient='records')
 
     # Split Data
-    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_2Hari_Lalu']]
+    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin']]
     y = df['Harga_Sekarang']
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
@@ -84,23 +90,6 @@ def predict_price(
         "y_test": y_test.tolist()
     }
 
-    # Inisialisasi Model SVR dengan parameter yang dipilih
-    # svr_params = {
-    #     "kernel": kernel,
-    #     "C": C,
-    #     "gamma": gamma,
-    #     "epsilon": epsilon
-    # }
-
-    # # Jika kernel adalah Polynomial atau Sigmoid, tambahkan coef0
-    # if kernel in ["poly", "sigmoid"]:
-    #     svr_params["coef0"] = coef0
-
-    # # Jika kernel adalah Polynomial, tambahkan degree
-    # if kernel == "poly":
-    #     svr_params["degree"] = degree
-
-    # svr = SVR(**svr_params)
     if kernel == "linear":
         svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
 
@@ -125,7 +114,7 @@ def predict_price(
 
    # Kembalikan skala data
     df_prediksi = df.iloc[len(X_train):].copy()
-    df_prediksi['Tanggal'] = df_prediksi['Tanggal'].dt.date
+    # df_prediksi['Tanggal'] = df_prediksi['Tanggal'].dt.date
     df_prediksi['Harga_Prediksi'] = y_pred
 
     # Daftar kolom yang telah dinormalisasi
@@ -150,33 +139,32 @@ def predict_price(
             std = np.sqrt(scaler.var_[index])
             df_prediksi[kolom] = df_prediksi[kolom] * std + mean
 
+    # Ambil nilai min dan max dari scaler
+    # data_min = scaler.data_min_
+    # data_max = scaler.data_max_
+    # feature_names = scaler.feature_names_in_.tolist()
+
+    # # Invers Harga_Prediksi berdasarkan skala 'Harga_Sekarang'
+    # index_harga_sekarang = feature_names.index('Harga_Sekarang')
+    # min_sekarang = data_min[index_harga_sekarang]
+    # max_sekarang = data_max[index_harga_sekarang]
+    # df_prediksi['Harga_Prediksi'] = df_prediksi['Harga_Prediksi'] * (max_sekarang - min_sekarang) + min_sekarang
+    # df_prediksi['Harga_Prediksi'] = df_prediksi['Harga_Prediksi'].round(0)
+
+    # # Invers kolom lain yang tersedia di df_prediksi
+    # for kolom in cols_scaled:
+    #     if kolom in df_prediksi.columns:
+    #         index = feature_names.index(kolom)
+    #         min_val = data_min[index]
+    #         max_val = data_max[index]
+    #         df_prediksi[kolom] = df_prediksi[kolom] * (max_val - min_val) + min_val
+
+
     # Export atau tampilkan hasil
     hasil_prediksi = df_prediksi[['Tanggal', 'Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak',
                                 'Harga_Kemarin', 'Harga_Sekarang', 'Harga_Prediksi']].to_dict(orient='records')
 
 
-    # # Cek jumlah data bernilai 0 awal
-    # zero_data_log = {"Sebelum Preprocessing": (df == 0).sum().to_dict()}
-
-    # # Konversi ke numerik dan hitung 0 setelah konversi
-    # df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']] = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'Harga_Kemarin', 'Harga_Sekarang']].apply(pd.to_numeric, errors='coerce')
-    # zero_data_log["Setelah Konversi Numerik"] = (df == 0).sum().to_dict()
-
-    # # Hapus NaN dan hitung 0 setelah drop NaN
-    # df.dropna(inplace=True)
-    # zero_data_log["Setelah Drop NaN Pertama"] = (df == 0).sum().to_dict()
-
-    # # Konversi tanggal
-    # df['Tanggal'] = pd.to_datetime(df['Tanggal'], errors='coerce')
-    # zero_data_log["Setelah Konversi Tanggal"] = (df == 0).sum().to_dict()
-
-    # # Tambah fitur Harga_2Hari_Lalu
-    # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
-    # zero_data_log["Setelah Tambah Harga_2Hari_Lalu"] = (df == 0).sum().to_dict()
-
-    # # Drop NaN setelah penambahan fitur dan hitung 0
-    # df.dropna(inplace=True)
-    # zero_data_log["Setelah Drop NaN Kedua"] = (df == 0).sum().to_dict()
 
 
 
@@ -188,7 +176,6 @@ def predict_price(
         "C": C,
         "Gamma": gamma,
         "Epsilon": epsilon,
-        # "Zero_Data_Log": zero_data_log,
         "Data_Asli": data_asli,
         "Hasil_Preprocessing": hasil_preprocessing,
         "Hasil_Normalisasi": hasil_normalisasi,

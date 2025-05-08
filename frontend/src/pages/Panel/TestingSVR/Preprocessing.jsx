@@ -79,7 +79,7 @@ const Preprocessing = ({ result }) => {
         <div className='flex justify-between items-center mb-5'>
           <div className='grid gap-3 items-center'>
             <h1 className='text-[14px] font-semibold'>Preprocessing</h1>
-            <p className='pr-[30px] text-[10px]'>Tahap ini dilakukan untuk mengubah kolom angka menjadi tipe numerik, menghapus nilai yang kosong, mengubah format tanggal menjadi format date time, menambahkan fitur baru Harga 2Hari Lalu sebagai tambahan informasi historis.</p>
+            <p className='pr-[30px] text-[10px]'>Tahap ini dilakukan untuk mengubah kolom angka menjadi tipe numerik, menghapus nilai yang kosong, mengisi nilai 0 dengan interpolasi linear.</p>
           </div>
           <div className='xl:flex grid gap-3'>
           <div className="relative w-full md:w-[308px] h-[32px]">
@@ -108,7 +108,7 @@ const Preprocessing = ({ result }) => {
                 <TableHead className="text-center font-bold text-black">Pasar Ngemplak</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Kemarin</TableHead>
                 <TableHead className="text-center font-bold text-black">Rata-Rata Sekarang</TableHead>
-                <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead>
+                {/* <TableHead className="text-center font-bold text-black">Harga 2Hari Lalu</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody className="bg-white">
@@ -121,7 +121,7 @@ const Preprocessing = ({ result }) => {
                     <TableCell className="text-center">{item.Pasar_Ngemplak}</TableCell>
                     <TableCell className="text-center">{item.Harga_Kemarin}</TableCell>
                     <TableCell className="text-center">{item.Harga_Sekarang}</TableCell>
-                    <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell>
+                    {/* <TableCell className="text-center">{item.Harga_2Hari_Lalu}</TableCell> */}
                   </TableRow>
                 ))
               ) : (
