@@ -81,29 +81,53 @@ async def upload_file(file: UploadFile = File(...), db=Depends(get_db)):
             df = pd.read_excel(file_stream, engine="openpyxl", dtype=str)
         else:
             raise HTTPException(status_code=400, detail="Format file tidak didukung!")
+        
         df.columns = df.columns.str.strip().str.lower()
         required_columns = {"tanggal", "pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"}
         if not required_columns.issubset(df.columns):
             raise HTTPException(status_code=400, detail=f"Kolom wajib: {required_columns}")
+        
         df["tanggal"] = pd.to_datetime(df["tanggal"], format="%Y-%m-%d", errors="coerce").dt.strftime("%Y-%m-%d")
         df.dropna(subset=["tanggal"], inplace=True)
-        df.replace(["N/A", "NA", "null", "None", "-", ""], 0, inplace=True)  # Ganti yang tidak valid jadi 0
-        df.fillna(0, inplace=True)  # Ubah semua NaN jadi 0
+        df.replace(["N/A", "NA", "null", "None", "-", ""], 0, inplace=True)
+        df.fillna(0, inplace=True)
 
         def clean_price(value):
             if pd.isna(value) or value == "":
                 return None
             return int(str(value).strip().replace(".", "").replace(",", "").replace(" ", "").replace("Rp", "").replace("IDR", ""))
-        df[["pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"]] = df[["pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"]].applymap(clean_price)
+        
+        df[["pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"]] = df[
+            ["pasar_bandung", "pasar_ngunut", "pasar_ngemplak", "ratarata_kemarin", "ratarata_sekarang"]
+        ].applymap(clean_price)
+
         if "id" in df.columns:
             df.drop(columns=["id"], inplace=True)
+
+        # CEK TANGGAL SUDAH ADA DI DATABASE
+        tanggal_list = df["tanggal"].tolist()
+        existing_dates = db.execute(
+            priceTomat.select().where(priceTomat.c.tanggal.in_(tanggal_list))
+        ).fetchall()
+
+        if existing_dates:
+            duplicate_dates = [row.tanggal for row in existing_dates]
+            raise HTTPException(
+                status_code=400,
+                detail=f"Data sudah ada. Data tidak disimpan."
+            )
+
         data_to_insert = df.to_dict(orient="records")
         insert_query = insert(priceTomat)
         db.execute(insert_query, data_to_insert)
         db.commit()
         return {"message": "Data berhasil diunggah dan disimpan"}
+    
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan: {str(e)}")
+
 
 @priceTomat_router.put("/{id}", dependencies=[Depends(verify_token)])
 def update_price(id: int, price: PriceTomatSchemas, db=Depends(get_db)):
