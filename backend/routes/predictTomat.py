@@ -275,7 +275,7 @@ def get_price_history(
             mape = mape = mean_absolute_percentage_error(y_test, y_pred)
 
 
-            # 11. Prediksi 30 Hari ke Depan
+            # 11. Prediksi 7 Hari ke Depan
             last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns) 
 
             predictions = []
@@ -296,7 +296,7 @@ def get_price_history(
             for i, pred in enumerate(predictions, start=1):
                 tanggal_prediksi = latest_date + timedelta(days=i)
                 tanggal_str = tanggal_prediksi.strftime("%Y-%m-%d")  # Format tanggal YYYY-MM-DD
-                harga_bulat = round(pred, 2)
+                harga_bulat = round(pred, 0)
                 
                 # print(f"Tanggal {tanggal_str}: {harga_bulat}")
                 
