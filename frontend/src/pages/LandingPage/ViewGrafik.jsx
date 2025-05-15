@@ -55,7 +55,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
         try {
             const response = await axios.get(`${API_URL}/predict/date`);
 
-            console.log(response.data.tanggal_old)
+            // console.log(response.data.tanggal_old)
             setDateTerbaru(response.data.tanggal_new)
             setDateTerlama(response.data.tanggal_old)
         } catch (error) {
@@ -69,9 +69,9 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
 
     const fetchData = async () => {
 
-        const formattedDate = format(date, "yyyy-MM-dd");
         
-        if (!date && !tempPriceType) {
+        
+        if (!!date && !!tempPriceType) {
 
             setTabelDataAktual([]);
             setTabelDataPredict([]);
@@ -100,6 +100,9 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
             });
             return;
         }
+
+        const formattedDate = format(date, "yyyy-MM-dd");
+        console.log(tempPriceType);
 
 
         if (formattedDate==dateTerbaru && tempPriceType=="all") {
@@ -148,7 +151,6 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
         }
 
         
-
         try {
             const response = await axios.get(`${API_URL}/predict/history?tanggal=${formattedDate}&data_type=${tempPriceType}`);
             const formattedData = response.data.dataGrafik.map(item => ({
