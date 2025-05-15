@@ -24,13 +24,13 @@ async def read_data(db: Session = Depends(get_db)):
             query = text("""
                 SELECT 
                 (SELECT pt.tanggal 
-                FROM predict.price_tomat AS pt 
-                JOIN predict.result_predict AS rp ON pt.id = rp.id 
+                FROM price_tomat AS pt 
+                JOIN result_predict AS rp ON pt.id = rp.id 
                 ORDER BY rp.id ASC 
                 LIMIT 1 OFFSET 29) AS tanggal_old,
 
                 (SELECT tanggal 
-                FROM predict.price_tomat 
+                FROM price_tomat 
                 ORDER BY tanggal DESC 
                 LIMIT 1) AS tanggal_new;
             """)
@@ -50,125 +50,167 @@ async def read_data(db: Session = Depends(get_db)):
 
 @predict_router.get("/price", response_model=dict, dependencies=[Depends(verify_token)])
 def predict_price(db: Session = Depends(get_db)):
-    existing_data = db.execute(select(resultPredict)).fetchone()
-    if existing_data:
-        db.execute(delete(resultPredict))  # Hapus semua data lama
-        db.commit()
-    # Ambil data dari database
-    data = db.execute(select(priceTomat)).fetchall()
-    settings = db.execute(select(settingPredict).where(settingPredict.c.status == True)).fetchone()
-    
-    if not data:
-        raise HTTPException(status_code=404, detail="Data harga tomat tidak ditemukan")
-    if not settings:
-        raise HTTPException(status_code=400, detail="Tidak ada konfigurasi prediksi yang aktif")
-    
-    # Konversi data ke DataFrame
-    df = pd.DataFrame([{ 
-        "id": item.id,  # Simpan ID
-        "Tanggal": item.tanggal, 
-        "Pasar_Bandung": item.pasar_bandung,
-        "Pasar_Ngunut": item.pasar_ngunut,
-        "Pasar_Ngemplak": item.pasar_ngemplak,
-        "RataRata_Kemarin": item.ratarata_kemarin,
-        "RataRata_Sekarang": item.ratarata_sekarang
-    } for item in data])
-    
-    if df.shape[0] < 3:
-        raise HTTPException(status_code=400, detail="Data tidak cukup untuk melakukan prediksi")
-    
-    # Preprocessing data
-    kolom_numerik = ['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']
-    df[kolom_numerik] = df[kolom_numerik].apply(pd.to_numeric, errors='coerce')
-    df[kolom_numerik] = df[kolom_numerik].replace(0, np.nan)
-    # Interpolasi nilai kosong (0 yang sudah jadi NaN)
-    df[kolom_numerik] = df[kolom_numerik].interpolate(method='linear', limit_direction='both')
-    # Drop jika masih ada NaN (misalnya di ujung data)
-    df.dropna(inplace=True)
+    try:
+        existing_data = db.execute(select(resultPredict)).fetchone()
+        if existing_data:
+            db.execute(delete(resultPredict))  # Hapus semua data lama
+            db.commit()
+        # Ambil data dari database
+        data = db.execute(select(priceTomat)).fetchall()
+        settings = db.execute(select(settingPredict).where(settingPredict.c.status == True)).fetchone()
+        
+        if not data:
+            raise HTTPException(status_code=404, detail="Data harga tomat tidak ditemukan")
+        if not settings:
+            raise HTTPException(status_code=400, detail="Tidak ada konfigurasi prediksi yang aktif")
+        
+        # Konversi data ke DataFrame
+        df = pd.DataFrame([{ 
+            "id": item.id,  # Simpan ID
+            "Tanggal": item.tanggal, 
+            "Pasar_Bandung": item.pasar_bandung,
+            "Pasar_Ngunut": item.pasar_ngunut,
+            "Pasar_Ngemplak": item.pasar_ngemplak,
+            "RataRata_Kemarin": item.ratarata_kemarin,
+            "RataRata_Sekarang": item.ratarata_sekarang
+        } for item in data])
+        
+        if df.shape[0] < 3:
+            raise HTTPException(status_code=400, detail="Data tidak cukup untuk melakukan prediksi")
+        
+        # Preprocessing data
+        kolom_numerik = ['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']
+        df[kolom_numerik] = df[kolom_numerik].apply(pd.to_numeric, errors='coerce')
+        df[kolom_numerik] = df[kolom_numerik].replace(0, np.nan)
+        # Interpolasi nilai kosong (0 yang sudah jadi NaN)
+        df[kolom_numerik] = df[kolom_numerik].interpolate(method='linear', limit_direction='both')
+        # Drop jika masih ada NaN (misalnya di ujung data)
+        df.dropna(inplace=True)
 
-    df['Tanggal'] = pd.to_datetime(df['Tanggal'])
-    # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
-    df.dropna(inplace=True)
-    
-    # Normalisasi Data
-    scaler = StandardScaler()
-    df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']] = scaler.fit_transform(
-        df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']]
-    )
+        df['Tanggal'] = pd.to_datetime(df['Tanggal'])
+        # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
+        df.dropna(inplace=True)
+        
+        # Normalisasi Data
+        scaler = StandardScaler()
+        df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']] = scaler.fit_transform(
+            df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']]
+        )
 
-    X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', ]].values
-    y = df['RataRata_Sekarang'].values
-    ids = df['id'].values
-    tanggal = df['Tanggal'].values
+        X = df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', ]].values
+        y = df['RataRata_Sekarang'].values
+        ids = df['id'].values
+        tanggal = df['Tanggal'].values
 
-    X_train, X_test, y_train, y_test, id_train, id_test, tanggal_train, tanggal_test = train_test_split(
-        X, y, ids, tanggal, test_size=0.2, shuffle=False
-    )
+        X_train, X_test, y_train, y_test, id_train, id_test, tanggal_train, tanggal_test = train_test_split(
+            X, y, ids, tanggal, test_size=0.2, shuffle=False
+        )
 
-    # Ambil parameter model dari database
-    kernel = settings.nama_kernel
-    C = float(settings.nilai_c) if settings.nilai_c is not None else 1.0
-    gamma = float(settings.nilai_gamma) if settings.nilai_gamma not in [None, "auto", "scale"] else settings.nilai_gamma
-    epsilon = float(settings.nilai_epsilon) if settings.nilai_epsilon is not None else 0.1
-    degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
-    coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
+        # Ambil parameter model dari database
+        kernel = settings.nama_kernel
+        C = float(settings.nilai_c) if settings.nilai_c is not None else 1.0
+        gamma = float(settings.nilai_gamma) if settings.nilai_gamma not in [None, "auto", "scale"] else settings.nilai_gamma
+        epsilon = float(settings.nilai_epsilon) if settings.nilai_epsilon is not None else 0.1
+        degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
+        coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
 
-    if kernel == "linear":
-        svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
+        if kernel == "linear":
+            svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
 
-    elif kernel == "rbf":
-        svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+        elif kernel == "rbf":
+            svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
 
-    elif kernel == "sigmoid":
-        svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+        elif kernel == "sigmoid":
+            svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
 
-    elif kernel == "poly":
-        svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
-    
+        elif kernel == "poly":
+            svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
+        
 
-    # Latih model dengan data latih
-    svr.fit(X_train, y_train)
+        # Latih model dengan data latih
+        svr.fit(X_train, y_train)
 
-    # Prediksi untuk data uji
-    y_pred = svr.predict(X_test)
-    
-    # Evaluasi Model
-    mae = mean_absolute_error(y_test, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-    mape = mean_absolute_percentage_error(y_test, y_pred)  
+        # Prediksi untuk data uji
+        y_pred = svr.predict(X_test)
+        
+        # Evaluasi Model
+        mae = mean_absolute_error(y_test, y_pred)
+        rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+        mape = mean_absolute_percentage_error(y_test, y_pred)  
 
-    jumlah_data_dikirim = 0
-    
-    # Gabungkan hasil prediksi ke data uji
-    for i in range(len(y_pred)):
-        id_tomat = id_test[i]
-        hasil = y_pred[i]
+        jumlah_data_dikirim = 0
+        
+        # Gabungkan hasil prediksi ke data uji
+        # for i in range(len(y_pred)):
+        #     id_tomat = id_test[i]
+        #     hasil = y_pred[i]
 
-        # Invers hasil prediksi
-        dummy_row = np.zeros((1, 5))  # [0, 0, 0, 0, 0, hasil_prediksi]
-        dummy_row[0][4] = hasil
-        prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
+        #     # Invers hasil prediksi
+        #     dummy_row = np.zeros((1, 5))  # [0, 0, 0, 0, 0, hasil_prediksi]
+        #     dummy_row[0][4] = hasil
+        #     prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
 
-        existing = db.execute(select(resultPredict).where(resultPredict.c.id == id_tomat)).fetchone()
-        if existing:
+        #     existing = db.execute(select(resultPredict).where(resultPredict.c.id == id_tomat)).fetchone()
+        #     if existing:
+        #         db.execute(
+        #             resultPredict.update()
+        #             .where(resultPredict.c.id == id_tomat)
+        #             .values(hasil_prediksi=prediksi_asli)
+        #         )
+        #     else:
+        #         db.execute(insert(resultPredict).values(id=id_tomat, hasil_prediksi=prediksi_asli))
+
+        #     jumlah_data_dikirim += 1
+
+        insert_data = []
+        update_data = []
+
+        for i in range(len(y_pred)):
+            
+            id_tomat = id_test[i]
+            hasil = y_pred[i]
+            print("start prediction", id_tomat, hasil)
+
+            # Invers hasil prediksi
+            dummy_row = np.zeros((1, 5))
+            dummy_row[0][4] = hasil
+            prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
+
+            
+            insert_data.append({
+                "id": id_tomat,
+                "hasil_prediksi": prediksi_asli
+            })
+
+        print("print data keseluruhan", insert_data)
+        # Bulk insert
+        if insert_data:
+            db.execute(insert(resultPredict), insert_data)
+
+        # Bulk update (looped, karena SQLAlchemy core tidak punya bulk update langsung)
+        for item in update_data:
             db.execute(
                 resultPredict.update()
-                .where(resultPredict.c.id == id_tomat)
-                .values(hasil_prediksi=prediksi_asli)
+                .where(resultPredict.c.id == item["id"])
+                .values(hasil_prediksi=item["hasil_prediksi"])
             )
-        else:
-            db.execute(insert(resultPredict).values(id=id_tomat, hasil_prediksi=prediksi_asli))
 
-        jumlah_data_dikirim += 1
+        jumlah_data_dikirim += len(insert_data) + len(update_data)
 
-    db.commit()
-    
-    return {
-        "Kernel": kernel,
-        "Evaluasi": { "MAE": mae, "RMSE": rmse, "MAPE": mape },
-         "Jumlah_data_dikirim": jumlah_data_dikirim,
-        "Pesan": "Prediksi seluruh data berhasil disimpan ke database"
-    }
+        db.commit()
+        
+        return {
+            "Kernel": kernel,
+            "Evaluasi": { "MAE": mae, "RMSE": rmse, "MAPE": mape },
+            "Jumlah_data_dikirim": jumlah_data_dikirim,
+            "Pesan": "Prediksi seluruh data berhasil disimpan ke database"
+        }
+
+    except Exception as e:
+        db.rollback()  # penting!
+        print(f"Error: {e}")
+    finally:
+        db.close()
 
 
 

@@ -71,7 +71,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
 
         
         
-        if (!!date && !!tempPriceType) {
+        if (!date && !tempPriceType) {
 
             setTabelDataAktual([]);
             setTabelDataPredict([]);
