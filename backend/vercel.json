@@ -4,7 +4,10 @@
         {
         "src": "index.py",
         "use": "@vercel/python",
-        "config": { "runtime": "python3.10" }
+        "config": { 
+            "runtime": "python3.10",
+            "pythonVersion": "3.10"
+        }
         }
     ],
     "routes": [
@@ -12,7 +15,10 @@
         "src": "/(.*)",
         "dest": "index.py"
         }
-    ]
+    ],
+    "functions": {
+        "**/*.py": {
+            "runtime": "python3.10"
+        }
+    }
 }
-
-
