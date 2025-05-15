@@ -6,7 +6,6 @@ from sklearn.svm import SVR
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
-import matplotlib.pyplot as plt
 from config.db import get_db
 from models.index import priceTomat
 from middleware.index import verify_token
