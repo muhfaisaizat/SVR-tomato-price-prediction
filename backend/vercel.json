@@ -2,15 +2,15 @@
     "version": 2,
     "builds": [
         {
-        "src": "./api/main.py",
+        "src": "api/index.py",
         "use": "@vercel/python",
-         "config": { "runtime": "python3.10" }
+        "config": { "runtime": "python3.10" }
         }
     ],
     "routes": [
         {
         "src": "/(.*)",
-        "dest": "./api/main.py"
+        "dest": "api/index.py"
         }
     ]
 }
