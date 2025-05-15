@@ -1,0 +1,11 @@
+# .vercelignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.DS_Store
+.ipynb_checkpoints/
+tests/
+notebooks/
