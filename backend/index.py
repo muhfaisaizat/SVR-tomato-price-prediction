@@ -43,7 +43,7 @@ app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
     # allow_origins=["http://localhost:5173"],  # Ganti dengan domain frontend jika perlu
-    allow_origins=["https://svr-tomato-price-prediction-frontend.vercel.app"],  # Ganti dengan domain frontend jika perlu
+    # allow_origins=["https://svr-tomato-price-prediction-frontend.vercel.app"],  # Ganti dengan domain frontend jika perlu
     allow_origins=["*"],  # Ganti dengan domain frontend jika perlu
     allow_credentials=False,
     allow_methods=["*"],
