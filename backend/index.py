@@ -7,6 +7,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+@app.get("/")
+def root():
+    return {"message": "FastAPI is running on Vercel!"}
+
 # Konfigurasi Swagger agar hanya meminta token (tanpa login ulang)
 def custom_openapi():
     if app.openapi_schema:
