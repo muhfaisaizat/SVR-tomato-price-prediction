@@ -2,13 +2,14 @@ import os
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException,  Query, status
+from fastapi import APIRouter, HTTPException,  Query, status, Depends
 from pydantic import BaseModel
-from config.db import conn
+from config.db import conn, get_db
 from models.index import users
 from dotenv import load_dotenv
 from sqlalchemy.sql import select
 from sqlalchemy.exc import SQLAlchemyError, OperationalError
+from sqlalchemy.orm import Session
 
 # Load environment variables
 load_dotenv()
@@ -30,11 +31,11 @@ class LoginRequest(BaseModel):
     password: str
 
 @auth_router.post("/login")
-async def login(data: LoginRequest):
+async def login(data: LoginRequest, db: Session = Depends(get_db)):
     try:
         # Eksekusi query untuk cek user
         query = users.select().where(users.c.email == data.email)
-        user = conn.execute(query).fetchone()
+        user = db.execute(query).fetchone()
 
         # Validasi user
         if not user:
@@ -63,18 +64,7 @@ async def login(data: LoginRequest):
             }
         }
 
-    except OperationalError:
-        # Jika koneksi DB putus, coba reconnect
-        try:
-            conn.close()  # tutup koneksi lama (jika masih terbuka)
-            from config.db import engine  # impor ulang engine
-            conn.connect()  # buka koneksi baru
-            raise HTTPException(status_code=500, detail="Koneksi database sempat terputus, silakan coba lagi.")
-        except Exception as reconnect_error:
-            raise HTTPException(status_code=500, detail=f"Gagal reconnect ke database: {str(reconnect_error)}")
-
     except SQLAlchemyError as e:
-        conn.rollback()  # rollback jika error transaksi
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     except Exception as e:
@@ -85,9 +75,9 @@ class ForgotPasswordRequest(BaseModel):
     new_password: str
 
 @auth_router.put("/forgot-password")
-async def forgot_password(data: ForgotPasswordRequest):
+async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get_db)):
     # Cek apakah user dengan email ini ada di database
-    user = conn.execute(users.select().where(users.c.email == data.email)).fetchone()
+    user = db.execute(users.select().where(users.c.email == data.email)).fetchone()
     if not user:
         raise HTTPException(status_code=404, detail="Email tidak ditemukan")
 
@@ -105,10 +95,10 @@ class CekEmail(BaseModel):
 
 
 @auth_router.get("/check-email")
-async def check_email(email: str = Query(..., description="Email yang akan dicek")):
+async def check_email(email: str = Query(..., description="Email yang akan dicek"), db: Session = Depends(get_db)):
     try:
         query = select(users).where(users.c.email == email)
-        result = conn.execute(query).fetchone()
+        result = db.execute(query).fetchone()
 
         if result:
             return {"message": "true"}
