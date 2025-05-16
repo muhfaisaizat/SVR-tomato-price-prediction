@@ -36,17 +36,17 @@ DEFAULT_VALUES = [
 ]
 
 @settingPredict_router.post("/seed",dependencies=[Depends(verify_token)])
-async def seed_database():
+async def seed_database(db: Session = Depends(get_db)):
     """Endpoint untuk menjalankan seeder secara manual via API."""
     query = select(settingPredict)
-    result = conn.execute(query).fetchall()
+    result = db.execute(query).fetchall()
 
     if result:
         raise HTTPException(status_code=400, detail="Seeder sudah dijalankan, data sudah ada.")
 
     query = insert(settingPredict).values(DEFAULT_VALUES)
-    conn.execute(query)
-    conn.commit()
+    db.execute(query)
+    db.commit()
     
     return {"message": " Seeder berhasil dijalankan: Data setting_predict sudah diisi."}
 
@@ -68,11 +68,11 @@ async def update_setting(
     nilai_epsilon: str = Query(None),
     nilai_degree: str = Query(None),
     nilai_coef: str = Query(None),
-    
+    db: Session = Depends(get_db)
 ):
     # Cek apakah setting dengan ID tersebut ada
     query = select(settingPredict.c.nama_kernel).where(settingPredict.c.id == setting_id)
-    result = conn.execute(query).fetchone()
+    result = db.execute(query).fetchone()
     
     if not result:
         raise HTTPException(status_code=404, detail="Setting not found")
@@ -98,32 +98,33 @@ async def update_setting(
 
     # Buat query update berdasarkan field yang diperbolehkan
     query = update(settingPredict).where(settingPredict.c.id == setting_id).values(**update_data)
-    result = conn.execute(query)
+    result = db.execute(query)
 
     if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Failed to update setting")
 
-    conn.commit()
+    db.commit()
     return {"message": "Setting updated successfully", "updated_fields": update_data}
 
 @settingPredict_router.put("/update-status/{setting_id}", dependencies=[Depends(verify_token)])
 async def update_status_setting(
     setting_id: int,
-    status: bool = Query(...)
+    status: bool = Query(...),
+    db: Session = Depends(get_db)
 ):
     # Cek apakah setting dengan ID tersebut ada
     query = select(settingPredict.c.id).where(settingPredict.c.id == setting_id)
-    result = conn.execute(query).fetchone()
+    result = db.execute(query).fetchone()
 
     if not result:
         raise HTTPException(status_code=404, detail="Setting not found")
 
     # Update hanya status
     query = update(settingPredict).where(settingPredict.c.id == setting_id).values(status=status)
-    result = conn.execute(query)
+    result = db.execute(query)
 
     if result.rowcount == 0:
         raise HTTPException(status_code=400, detail="Failed to update status")
 
-    conn.commit()
+    db.commit()
     return {"message": "Status updated successfully", "updated_status": status}

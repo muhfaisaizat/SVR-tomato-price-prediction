@@ -1,9 +1,10 @@
 import bcrypt
 from fastapi import APIRouter, HTTPException, Depends
-from config.db import conn
+from config.db import conn, get_db
 from models.index import users
 from schemas.index import User
 from middleware.index import verify_token
+from sqlalchemy.orm import Session
 
 # #  Seeder untuk Admin
 # def seed_admin():
@@ -40,18 +41,18 @@ user_router = APIRouter(
 
 #  READ ALL USERS
 @user_router.get("/",dependencies=[Depends(verify_token)])
-async def read_data():
+async def read_data(db: Session = Depends(get_db)):
     try:
-        result = conn.execute(users.select()).fetchall()
+        result = db.execute(users.select()).fetchall()
         return [dict(row._mapping) for row in result]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 #  READ USER BY ID
 @user_router.get("/{id}",dependencies=[Depends(verify_token)])
-async def read_data(id: int):
+async def read_data(id: int, db: Session = Depends(get_db)):
     try:
-        result = conn.execute(users.select().where(users.c.id == id)).fetchone()
+        result = db.execute(users.select().where(users.c.id == id)).fetchone()
         if result is None:
             raise HTTPException(status_code=404, detail="User not found")
         return dict(result._mapping)
@@ -60,42 +61,42 @@ async def read_data(id: int):
 
 #  CREATE USER
 @user_router.post("/",dependencies=[Depends(verify_token)])
-async def write_data(user: User):
+async def write_data(user: User, db: Session = Depends(get_db)):
     try:
         new_user = {"email": user.email, "password": user.password}
-        conn.execute(users.insert().values(new_user))
-        conn.commit()
+        db.execute(users.insert().values(new_user))
+        db.commit()
         return {"message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 #  UPDATE USER
 @user_router.put("/{id}",dependencies=[Depends(verify_token)])
-async def update_data(id: int, user: User):
+async def update_data(id: int, user: User, db: Session = Depends(get_db)):
     try:
-        result = conn.execute(users.select().where(users.c.id == id)).fetchone()
+        result = db.execute(users.select().where(users.c.id == id)).fetchone()
         if result is None:
             raise HTTPException(status_code=404, detail="User not found")
         
-        conn.execute(users.update().where(users.c.id == id).values(
+        db.execute(users.update().where(users.c.id == id).values(
             email=user.email,
             password=user.password
         ))
-        conn.commit()
+        db.commit()
         return {"message": "User updated successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 #  DELETE USER
 @user_router.delete("/{id}",dependencies=[Depends(verify_token)])
-async def delete_data(id: int):
+async def delete_data(id: int, db: Session = Depends(get_db)):
     try:
-        result = conn.execute(users.select().where(users.c.id == id)).fetchone()
+        result = db.execute(users.select().where(users.c.id == id)).fetchone()
         if result is None:
             raise HTTPException(status_code=404, detail="User not found")
         
-        conn.execute(users.delete().where(users.c.id == id))
-        conn.commit()
+        db.execute(users.delete().where(users.c.id == id))
+        db.commit()
         return {"message": "User deleted successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -32,57 +32,83 @@ async def get_all_riwayat(db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan: {str(e)}")
 
 
-#  Get riwayat pengujian by ID
+# Get riwayat pengujian by ID
 @riwayat_router.get("/{id}", dependencies=[Depends(verify_token)])
-async def get_riwayat_by_id(id: int):
-    query = select(riwayatPengujian).where(riwayatPengujian.c.id == id)
-    result = conn.execute(query).fetchone()
-    if result:
-        return dict(result._mapping)
-    raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
+async def get_riwayat_by_id(id: int, db: Session = Depends(get_db)):
+    try:
+        query = select(riwayatPengujian).where(riwayatPengujian.c.id == id)
+        result = db.execute(query).fetchone()
+        if result:
+            return dict(result._mapping)
+        raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-#  Create new riwayat pengujian
+# Create new riwayat pengujian
 @riwayat_router.post("/", dependencies=[Depends(verify_token)])
-async def create_riwayat(data: RiwayatPengujian):
-    query = insert(riwayatPengujian).values(
-        id_kernel=data.id_kernel,
-        tanggal=data.tanggal,
-        infoHyperparameter=data.infoHyperparameter,
-        MAE=data.MAE,
-        RMSE=data.RMSE,
-        MAPE=data.MAPE
-    )
-    conn.execute(query)
-    conn.commit()
-    return {"message": "Riwayat Pengujian berhasil ditambahkan"}
+async def create_riwayat(data: RiwayatPengujian, db: Session = Depends(get_db)):
+    try:
+        query = insert(riwayatPengujian).values(
+            id_kernel=data.id_kernel,
+            tanggal=data.tanggal,
+            infoHyperparameter=data.infoHyperparameter,
+            MAE=data.MAE,
+            RMSE=data.RMSE,
+            MAPE=data.MAPE
+        )
+        db.execute(query)
+        db.commit()
+        return {"message": "Riwayat Pengujian berhasil ditambahkan"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-#  Update riwayat pengujian by ID
+# Update riwayat pengujian by ID
 @riwayat_router.put("/{id}", dependencies=[Depends(verify_token)])
-async def update_riwayat(id: int, data: RiwayatPengujian):
-    query = update(riwayatPengujian).where(riwayatPengujian.c.id == id).values(
-        id_kernel=data.id_kernel,
-        tanggal=data.tanggal,
-        infoHyperparameter=data.infoHyperparameter,
-        MAE=data.MAE,
-        RMSE=data.RMSE,
-        MAPE=data.MAPE
-    )
-    result = conn.execute(query)
-    conn.commit()
-    
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
-    
-    return {"message": "Riwayat Pengujian berhasil diperbarui"}
+async def update_riwayat(id: int, data: RiwayatPengujian, db: Session = Depends(get_db)):
+    try:
+        query = update(riwayatPengujian).where(riwayatPengujian.c.id == id).values(
+            id_kernel=data.id_kernel,
+            tanggal=data.tanggal,
+            infoHyperparameter=data.infoHyperparameter,
+            MAE=data.MAE,
+            RMSE=data.RMSE,
+            MAPE=data.MAPE
+        )
+        result = db.execute(query)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
+        
+        return {"message": "Riwayat Pengujian berhasil diperbarui"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
-#  Delete riwayat pengujian by ID
+# Delete riwayat pengujian by ID
 @riwayat_router.delete("/{id}", dependencies=[Depends(verify_token)])
-async def delete_riwayat(id: int):
-    query = delete(riwayatPengujian).where(riwayatPengujian.c.id == id)
-    result = conn.execute(query)
-    conn.commit()
-    
-    if result.rowcount == 0:
-        raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
-    
-    return {"message": "Riwayat Pengujian berhasil dihapus"}
+async def delete_riwayat(id: int, db: Session = Depends(get_db)):
+    try:
+        query = delete(riwayatPengujian).where(riwayatPengujian.c.id == id)
+        result = db.execute(query)
+        db.commit()
+        
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Riwayat Pengujian tidak ditemukan")
+        
+        return {"message": "Riwayat Pengujian berhasil dihapus"}
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")

@@ -85,8 +85,8 @@ async def forgot_password(data: ForgotPasswordRequest, db: Session = Depends(get
     hashed_password = bcrypt.hashpw(data.new_password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
     # Update password di database
-    conn.execute(users.update().where(users.c.email == data.email).values(password=hashed_password))
-    conn.commit()
+    db.execute(users.update().where(users.c.email == data.email).values(password=hashed_password))
+    db.commit()
 
     return {"message": "Password berhasil diperbarui"}
 
@@ -107,7 +107,7 @@ async def check_email(email: str = Query(..., description="Email yang akan dicek
 
     except SQLAlchemyError as e:
         try:
-            conn.rollback()  # Jika sebelumnya ada transaksi yang belum selesai
+            db.rollback()  # Jika sebelumnya ada transaksi yang belum selesai
         except:
             pass
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
