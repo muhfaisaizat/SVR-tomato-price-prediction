@@ -8,6 +8,7 @@ from config.db import conn
 from models.index import users
 from dotenv import load_dotenv
 from sqlalchemy.sql import select
+from sqlalchemy.exc import SQLAlchemyError
 
 # Load environment variables
 load_dotenv()
@@ -85,10 +86,19 @@ class CekEmail(BaseModel):
 
 @auth_router.get("/check-email")
 async def check_email(email: str = Query(..., description="Email yang akan dicek")):
-    query = select(users).where(users.c.email == email)
-    result = conn.execute(query).fetchone()
+    try:
+        query = select(users).where(users.c.email == email)
+        result = conn.execute(query).fetchone()
 
-    if result:
-        return {"message": "true"}
-    else:
-        raise HTTPException(status_code=400, detail="false")
+        if result:
+            return {"message": "true"}
+        else:
+            raise HTTPException(status_code=400, detail="false")
+    
+    except SQLAlchemyError as e:
+        # Error dari SQLAlchemy (query, koneksi, dsb)
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+    
+    except Exception as e:
+        # Error lain yang tak terduga
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
