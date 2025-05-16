@@ -2,13 +2,13 @@ import os
 import bcrypt
 import jwt
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException,  Query
+from fastapi import APIRouter, HTTPException,  Query, status
 from pydantic import BaseModel
 from config.db import conn
 from models.index import users
 from dotenv import load_dotenv
 from sqlalchemy.sql import select
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, OperationalError
 
 # Load environment variables
 load_dotenv()
@@ -31,34 +31,54 @@ class LoginRequest(BaseModel):
 
 @auth_router.post("/login")
 async def login(data: LoginRequest):
-    # Cek apakah user dengan email ini ada di database
-    user = conn.execute(users.select().where(users.c.email == data.email)).fetchone()
-    if not user:
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+    try:
+        # Eksekusi query untuk cek user
+        query = users.select().where(users.c.email == data.email)
+        user = conn.execute(query).fetchone()
 
-    # Verifikasi password
-    if not bcrypt.checkpw(data.password.encode("utf-8"), user.password.encode("utf-8")):
-        raise HTTPException(status_code=400, detail="Invalid email or password")
+        # Validasi user
+        if not user:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email or password")
 
-    # Buat token JWT
-    payload = {
-        "sub": user.email,
-        "role": user.role,
-        "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        # Verifikasi password
+        if not bcrypt.checkpw(data.password.encode("utf-8"), user.password.encode("utf-8")):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email or password")
 
-    # Kembalikan token beserta data user
-    return {
-        "access_token": token,
-        "token_type": "bearer",
-        "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        "user": {
-            "id": user.id,
-            "email": user.email,
+        # Buat token JWT
+        payload = {
+            "sub": user.email,
             "role": user.role,
+            "exp": datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
         }
-    }
+        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "role": user.role,
+            }
+        }
+
+    except OperationalError:
+        # Jika koneksi DB putus, coba reconnect
+        try:
+            conn.close()  # tutup koneksi lama (jika masih terbuka)
+            from config.db import engine  # impor ulang engine
+            conn.connect()  # buka koneksi baru
+            raise HTTPException(status_code=500, detail="Koneksi database sempat terputus, silakan coba lagi.")
+        except Exception as reconnect_error:
+            raise HTTPException(status_code=500, detail=f"Gagal reconnect ke database: {str(reconnect_error)}")
+
+    except SQLAlchemyError as e:
+        conn.rollback()  # rollback jika error transaksi
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 class ForgotPasswordRequest(BaseModel):
     email: str
