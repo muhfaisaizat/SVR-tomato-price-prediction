@@ -107,9 +107,8 @@ class CekEmail(BaseModel):
 @auth_router.get("/check-email")
 async def check_email(email: str = Query(..., description="Email yang akan dicek")):
     try:
-        with conn.begin():  # transaksi otomatis
-            query = select(users).where(users.c.email == email)
-            result = conn.execute(query).fetchone()
+        query = select(users).where(users.c.email == email)
+        result = conn.execute(query).fetchone()
 
         if result:
             return {"message": "true"}
@@ -117,6 +116,10 @@ async def check_email(email: str = Query(..., description="Email yang akan dicek
             raise HTTPException(status_code=400, detail="false")
 
     except SQLAlchemyError as e:
+        try:
+            conn.rollback()  # Jika sebelumnya ada transaksi yang belum selesai
+        except:
+            pass
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
     except Exception as e:
