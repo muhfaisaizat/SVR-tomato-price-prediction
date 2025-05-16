@@ -44,7 +44,7 @@ app.add_middleware(
     CORSMiddleware,
     # allow_origins=["http://localhost:5173"],  # Ganti dengan domain frontend jika perlu
     # allow_origins=["https://svr-tomato-price-prediction-frontend.vercel.app"],  # Ganti dengan domain frontend jika perlu
-    allow_origins=["*"],  # Ganti dengan domain frontend jika perlu
+    allow_origins=["predictiontomat.onrender.com"],  # Ganti dengan domain frontend jika perlu
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
