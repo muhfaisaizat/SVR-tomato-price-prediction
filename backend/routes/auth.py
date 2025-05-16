@@ -87,18 +87,17 @@ class CekEmail(BaseModel):
 @auth_router.get("/check-email")
 async def check_email(email: str = Query(..., description="Email yang akan dicek")):
     try:
-        query = select(users).where(users.c.email == email)
-        result = conn.execute(query).fetchone()
+        with conn.begin():  # transaksi otomatis
+            query = select(users).where(users.c.email == email)
+            result = conn.execute(query).fetchone()
 
         if result:
             return {"message": "true"}
         else:
             raise HTTPException(status_code=400, detail="false")
-    
+
     except SQLAlchemyError as e:
-        # Error dari SQLAlchemy (query, koneksi, dsb)
         raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-    
+
     except Exception as e:
-        # Error lain yang tak terduga
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
