@@ -69,8 +69,8 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
 
     const fetchData = async () => {
 
-        
-        
+
+
         if (!date && !tempPriceType) {
 
             setTabelDataAktual([]);
@@ -105,7 +105,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
         console.log(tempPriceType);
 
 
-        if (formattedDate==dateTerbaru && tempPriceType=="all") {
+        if (formattedDate == dateTerbaru && tempPriceType == "all") {
 
             setTabelDataAktual([]);
             setTabelDataPredict([]);
@@ -120,7 +120,7 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
             return;
         }
 
-        if (formattedDate==dateTerbaru && tempPriceType=="actual") {
+        if (formattedDate == dateTerbaru && tempPriceType == "actual") {
 
             setTabelDataAktual([]);
             setTabelDataPredict([]);
@@ -150,13 +150,17 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
             return;
         }
 
-        
+
         try {
             const response = await axios.get(`${API_URL}/predict/history?tanggal=${formattedDate}&data_type=${tempPriceType}`);
             const formattedData = response.data.dataGrafik.map(item => ({
                 date: item.tanggal,
                 actual: item.harga_aktual,
-                predicted: item.harga_prediksi
+                predicted: item.harga_prediksi,
+                linear: item.linear,
+                rbf: item.rbf,
+                sigmoid: item.sigmoid,
+                poly: item.poly,
             }));
 
             setPriceType(tempPriceType);
@@ -246,6 +250,25 @@ const ViewGrafik = ({ date, setDate, dataYAxis, setDataYAxis, priceType, setPric
                                         )}
                                         {priceType !== "actual" && (
                                             <Line dataKey="predicted" type="monotone" stroke="#387ef5" strokeWidth={2} dot={false} name="Harga Prediksi" />
+                                        )}
+                                        {["linear", "poly", "rbf", "sigmoid"].map((kernel) =>
+                                            chartData[0] && chartData[0][kernel] !== undefined ? (
+                                                <Line
+                                                    key={kernel}
+                                                    dataKey={kernel}
+                                                    type="monotone"
+                                                    stroke={
+                                                        kernel === "linear" ? "#00C49F" :
+                                                            kernel === "rbf" ? "#FFBB28" :
+                                                                kernel === "sigmoid" ? "#8884d8" :
+                                                                    kernel === "poly" ? "#FF4444" :
+                                                                        "#000"
+                                                    }
+                                                    strokeWidth={2}
+                                                    dot={false}
+                                                    name={`Prediksi ${kernel}`}
+                                                />
+                                            ) : null
                                         )}
                                     </LineChart>
                                 </ResponsiveContainer>

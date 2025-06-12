@@ -9,6 +9,7 @@ class SettingPredict(BaseModel):
     nilai_degree: Optional[str] = None
     nilai_coef: Optional[str] = None
     status: bool
+    statuskedepan: bool
 
     class Config:
         orm_mode = True

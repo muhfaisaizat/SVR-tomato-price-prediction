@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Query, Depends
 from config.db import conn, get_db
 from models.index import settingPredict
 from schemas.index import SettingPredict
-from sqlalchemy.sql import select, insert, update, delete
+from sqlalchemy.sql import select, insert, update, delete, text
 from middleware.index import verify_token
 from sqlalchemy.orm import Session
 
@@ -12,6 +12,25 @@ settingPredict_router = APIRouter(
 )
 
 # Get All Settings
+@settingPredict_router.get("/all", dependencies=[Depends(verify_token)])
+def get_all_settings(db: Session = Depends(get_db)):
+    try:
+        raw_query = text("""
+            SELECT * 
+            FROM setting_predict
+            WHERE nama_kernel IN ('linear', 'rbf', 'sigmoid', 'poly')
+            ORDER BY FIELD(nama_kernel, 'linear', 'rbf', 'sigmoid', 'poly');
+        """)
+        result = db.execute(raw_query).fetchall()
+
+        if not result:
+            return {"message": "No data found"}  # Menghindari error saat data kosong
+
+        return [dict(row._mapping) for row in result]
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
 @settingPredict_router.get("/", dependencies=[Depends(verify_token)])
 def get_all_settings(db: Session = Depends(get_db)):
     try:
@@ -128,3 +147,26 @@ async def update_status_setting(
 
     db.commit()
     return {"message": "Status updated successfully", "updated_status": status}
+
+@settingPredict_router.put("/update-status-kedepan/{setting_id}", dependencies=[Depends(verify_token)])
+async def update_status_setting(
+    setting_id: int,
+    statuskedepan: bool = Query(...),
+    db: Session = Depends(get_db)
+):
+    # Cek apakah setting dengan ID tersebut ada
+    query = select(settingPredict.c.id).where(settingPredict.c.id == setting_id)
+    result = db.execute(query).fetchone()
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Setting not found")
+
+    # Update hanya status
+    query = update(settingPredict).where(settingPredict.c.id == setting_id).values(statuskedepan=statuskedepan)
+    result = db.execute(query)
+
+    if result.rowcount == 0:
+        raise HTTPException(status_code=400, detail="Failed to update status kedepan")
+
+    db.commit()
+    return {"message": "Status updated successfully", "updated_status_kedepan": statuskedepan}

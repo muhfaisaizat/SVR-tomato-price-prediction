@@ -90,9 +90,20 @@ def predict_price(db: Session = Depends(get_db)):
         df['Tanggal'] = pd.to_datetime(df['Tanggal'])
         # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
         df.dropna(inplace=True)
+
+        min_max_per_kolom = {}
+
+        for kolom in kolom_numerik:
+            nilai_min = df[kolom].min()
+            nilai_max = df[kolom].max()
+            min_max_per_kolom[kolom] = {
+                'min': nilai_min,
+                'max': nilai_max
+            }
         
         # Normalisasi Data
-        scaler = StandardScaler()
+        # scaler = StandardScaler()
+        scaler = MinMaxScaler()
         df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']] = scaler.fit_transform(
             df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin',  'RataRata_Sekarang']]
         )
@@ -169,12 +180,19 @@ def predict_price(db: Session = Depends(get_db)):
             
             id_tomat = id_test[i]
             hasil = y_pred[i]
-            print("start prediction", id_tomat, hasil)
+            # hasil = float(y_pred[i])
+            # print("start prediction", id_tomat, hasil)
 
             # Invers hasil prediksi
-            dummy_row = np.zeros((1, 5))
-            dummy_row[0][4] = hasil
-            prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
+            # dummy_row = np.zeros((1, 5))
+            # dummy_row[0][4] = hasil
+            # prediksi_asli = float(scaler.inverse_transform(dummy_row)[0][4])
+
+            min_pred = min_max_per_kolom['RataRata_Sekarang']['min']
+            max_pred = min_max_per_kolom['RataRata_Sekarang']['max']
+            prediksi_asli1 = hasil * (max_pred - min_pred) + min_pred
+            prediksi_asli = int(round(prediksi_asli1, 0))
+            # print("start prediction", id_tomat, prediksi_asli)
 
             
             insert_data.append({
@@ -238,7 +256,7 @@ def get_price_history(
         
         if tanggal_input == latest_date:
             # **Melakukan Prediksi 7 Hari ke Depan**
-            settings = db.execute(select(settingPredict).where(settingPredict.c.status == True)).fetchone()
+            settings = db.execute(select(settingPredict).where(settingPredict.c.statuskedepan == True)).mappings().all()
             if not settings:
                 raise HTTPException(status_code=400, detail="Tidak ada konfigurasi prediksi yang aktif")
 
@@ -272,9 +290,19 @@ def get_price_history(
             # df['Harga_2Hari_Lalu'] = df['Harga_Kemarin'].shift(1)
             df.dropna(inplace=True)
 
+            min_max_per_kolom = {}
+
+            for kolom in kolom_numerik:
+                nilai_min = df[kolom].min()
+                nilai_max = df[kolom].max()
+                min_max_per_kolom[kolom] = {
+                    'min': nilai_min,
+                    'max': nilai_max
+                }
+
            # 6. Normalisasi Data
-            # scaler = MinMaxScaler()
-            scaler = StandardScaler()
+            scaler = MinMaxScaler()
+            # scaler = StandardScaler()
             df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']] = scaler.fit_transform(
                 df[['Pasar_Bandung', 'Pasar_Ngunut', 'Pasar_Ngemplak', 'RataRata_Kemarin', 'RataRata_Sekarang']]
             )
@@ -286,83 +314,168 @@ def get_price_history(
 
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=False)
 
-            # Inisialisasi SVR
-            kernel = settings.nama_kernel
-            C = float(settings.nilai_c) if settings.nilai_c is not None else 1.0
-            gamma = float(settings.nilai_gamma) if settings.nilai_gamma not in [None, "auto", "scale"] else settings.nilai_gamma
-            epsilon = float(settings.nilai_epsilon) if settings.nilai_epsilon is not None else 0.1
-            degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
-            coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
+            # # Inisialisasi SVR
+            # # kernel = settings.nama_kernel
+            # kernel = settings["nama_kernel"]
+            # C = float(settings.nilai_c) if settings.nilai_c is not None else 1.0
+            # gamma = float(settings.nilai_gamma) if settings.nilai_gamma not in [None, "auto", "scale"] else settings.nilai_gamma
+            # epsilon = float(settings.nilai_epsilon) if settings.nilai_epsilon is not None else 0.1
+            # degree = int(settings.nilai_degree) if settings.nilai_degree is not None else 3
+            # coef0 = float(settings.nilai_coef) if settings.nilai_coef is not None else 0.0
 
-            if kernel == "linear":
-                svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
+            # if kernel == "linear":
+            #     svr = SVR(kernel="linear", C=C,  epsilon=epsilon)
 
-            elif kernel == "rbf":
-                svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+            # elif kernel == "rbf":
+            #     svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
 
-            elif kernel == "sigmoid":
-                svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+            # elif kernel == "sigmoid":
+            #     svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
 
-            elif kernel == "poly":
-                svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
+            # elif kernel == "poly":
+            #     svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
 
-            svr.fit(X_train, y_train)
+            # svr.fit(X_train, y_train)
 
-            # 9. Lakukan Prediksi pada Data Uji
-            y_pred = svr.predict(X_test)
+            # # # 9. Lakukan Prediksi pada Data Uji
+            # # y_pred = svr.predict(X_test)
 
-            # 10. Evaluasi Model
-            mae = mean_absolute_error(y_test, y_pred)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-            mape = mape = mean_absolute_percentage_error(y_test, y_pred)
+            # # # 10. Evaluasi Model
+            # # mae = mean_absolute_error(y_test, y_pred)
+            # # rmse = np.sqrt(mean_squared_error(y_test, y_pred))
+            # # mape = mape = mean_absolute_percentage_error(y_test, y_pred)
 
 
-            # 11. Prediksi 7 Hari ke Depan
-            last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns) 
+            # # 11. Prediksi 7 Hari ke Depan
+            # last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns) 
 
-            predictions = []
-            for _ in range(7):
-                pred = svr.predict(last_data)[0]
-                predictions.append(pred)
+            # predictions = []
+            # for _ in range(7):
+            #     pred = svr.predict(last_data)[0]
+            #     predictions.append(pred)
 
-                #  Update input dengan DataFrame, bukan NumPy array
-                last_data = pd.DataFrame([[last_data.iloc[0, 1], last_data.iloc[0, 2], last_data.iloc[0, 3], pred]], columns=X.columns)
+            #     #  Update input dengan DataFrame, bukan NumPy array
+            #     last_data = pd.DataFrame([[last_data.iloc[0, 1], last_data.iloc[0, 2], last_data.iloc[0, 3], pred]], columns=X.columns)
 
-            # 12. Konversi hasil prediksi ke skala asli
-            predictions = scaler.inverse_transform([[0, 0, 0, 0, p] for p in predictions])[:, 4]
+            # # 12. Konversi hasil prediksi ke skala asli
+            # # predictions = scaler.inverse_transform([[0, 0, 0, 0, p] for p in predictions])[:, 4]
+            # predictions = np.array(predictions)
+            # min_pred = min_max_per_kolom['RataRata_Sekarang']['min']
+            # max_pred = min_max_per_kolom['RataRata_Sekarang']['max']
+            # prediksi_asli1 = predictions * (max_pred - min_pred) + min_pred
+            # predictions = prediksi_asli1
 
-            # 13. Tampilkan hasil prediksi
-            prediksi_harga = []
-            harga_list = []  # Menyimpan harga untuk mencari min dan max
+            # # 13. Tampilkan hasil prediksi
+            # hasil_prediksi_semua_kernel = []
+            # prediksi_harga = []
+            # harga_list = []  # Menyimpan harga untuk mencari min dan max
 
-            for i, pred in enumerate(predictions, start=1):
-                tanggal_prediksi = latest_date + timedelta(days=i)
-                tanggal_str = tanggal_prediksi.strftime("%Y-%m-%d")  # Format tanggal YYYY-MM-DD
-                harga_bulat = round(pred, 0)
+            # for i, pred in enumerate(predictions, start=1):
+            #     tanggal_prediksi = latest_date + timedelta(days=i)
+            #     tanggal_str = tanggal_prediksi.strftime("%Y-%m-%d")  # Format tanggal YYYY-MM-DD
+            #     harga_bulat = round(pred, 0)
                 
-                # print(f"Tanggal {tanggal_str}: {harga_bulat}")
+            #     # print(f"Tanggal {tanggal_str}: {harga_bulat}")
                 
-                prediksi_harga.append({"tanggal": tanggal_str, "harga_prediksi": harga_bulat})
-                harga_list.append(harga_bulat)
+            #     prediksi_harga.append({"tanggal": tanggal_str, "harga_prediksi": harga_bulat})
+            #     harga_list.append(harga_bulat)
 
-            # Dapatkan nilai min dan max
-            harga_min = min(harga_list)
-            harga_max = max(harga_list)
-            y_axis = f"{harga_min},{harga_max}"
+            # hasil_prediksi_semua_kernel.append({
+            #     "kernel": kernel,
+            #     "hasil_prediksi": prediksi_harga,
+            #     "min": min(harga_list),
+            #     "max": max(harga_list)
+            # })
+
+            # # Dapatkan nilai min dan max
+            # harga_min = min(harga_list)
+            # harga_max = max(harga_list)
+            # y_axis = f"{harga_min},{harga_max}"
 
             dataTableAktual = []
             dataTablePrediksi = []
+            prediksi_per_hari = {}
+
+            hasil_prediksi_semua_kernel = []
+            y_axis = f"{int(min_max_per_kolom['RataRata_Sekarang']['min'])},{int(min_max_per_kolom['RataRata_Sekarang']['max'])}"
+
+            # Loop setiap kernel aktif
+            for setting in settings:
+                
+                
+                kernel = setting["nama_kernel"]
+                C = float(setting["nilai_c"]) if setting["nilai_c"] is not None else 1.0
+                gamma = setting["nilai_gamma"]
+                gamma = float(gamma) if gamma not in [None, "auto", "scale"] else gamma
+                epsilon = float(setting["nilai_epsilon"]) if setting["nilai_epsilon"] is not None else 0.1
+                degree = int(setting["nilai_degree"]) if setting["nilai_degree"] is not None else 3
+                coef0 = float(setting["nilai_coef"]) if setting["nilai_coef"] is not None else 0.0
+
+                # Inisialisasi model SVR sesuai kernel
+                if kernel == "linear":
+                    svr = SVR(kernel="linear", C=C, epsilon=epsilon)
+                elif kernel == "rbf":
+                    svr = SVR(kernel="rbf", C=C, gamma=gamma, epsilon=epsilon)
+                elif kernel == "sigmoid":
+                    svr = SVR(kernel="sigmoid", C=C, gamma=gamma, coef0=coef0, epsilon=epsilon)
+                elif kernel == "poly":
+                    svr = SVR(kernel="poly", C=C, gamma=gamma, coef0=coef0, degree=degree, epsilon=epsilon)
+                else:
+                    continue  # Lewati jika kernel tidak valid
+
+                svr.fit(X_train, y_train)
+
+                # Prediksi 7 hari ke depan
+                last_data = pd.DataFrame([X.iloc[-1].values], columns=X.columns)
+                predictions = []
+                for _ in range(7):
+                    pred = svr.predict(last_data)[0]
+                    predictions.append(pred)
+                    last_data = pd.DataFrame([[last_data.iloc[0, 1], last_data.iloc[0, 2], last_data.iloc[0, 3], pred]], columns=X.columns)
+
+                # Konversi skala prediksi ke harga asli
+                predictions = np.array(predictions)
+                min_pred = min_max_per_kolom['RataRata_Sekarang']['min']
+                max_pred = min_max_per_kolom['RataRata_Sekarang']['max']
+                prediksi_asli = predictions * (max_pred - min_pred) + min_pred
+
+                # Format hasil
+                prediksi_harga = []
+                harga_list = []
+                for i, pred in enumerate(prediksi_asli, start=1):
+                    tanggal_prediksi = latest_date + timedelta(days=i)
+                    tanggal_str = tanggal_prediksi.strftime("%Y-%m-%d")
+                    harga_bulat = round(pred, 0)
+                    prediksi_harga.append({"tanggal": tanggal_str, "harga_prediksi": harga_bulat})
+                    harga_list.append(harga_bulat)
+
+                hasil_prediksi_semua_kernel.append({
+                    "kernel": kernel,
+                    "hasil_prediksi": prediksi_harga,
+                })
+
+                for i, pred in enumerate(prediksi_asli, start=1):
+                    tanggal_prediksi = latest_date + timedelta(days=i)
+                    tanggal_str = tanggal_prediksi.strftime("%Y-%m-%d")
+                    harga_bulat = round(pred, 0)
+
+                    if tanggal_str not in prediksi_per_hari:
+                        prediksi_per_hari[tanggal_str] = {"tanggal": tanggal_str}
+
+                    prediksi_per_hari[tanggal_str][kernel] = harga_bulat
+
+            dataTablePrediksi = list(prediksi_per_hari.values())
 
             
 
             return {
-                "Mean Absolute Error (MAE)": mae,
-                "Root Mean Squared Error (RMSE)": rmse,
-                "Mean Absolute Percentage Error (MAPE)": mape,
+                # "Mean Absolute Error (MAE)": mae,
+                # "Root Mean Squared Error (RMSE)": rmse,
+                # "Mean Absolute Percentage Error (MAPE)": mape,
                 "dataTableAktual": dataTableAktual, 
-                "dataTablePrediksi": prediksi_harga,
+                "dataTablePrediksi": dataTablePrediksi,
                 "tanggal_input": tanggal,
-                "dataGrafik": prediksi_harga,
+                "dataGrafik": dataTablePrediksi,
                 "YAxis": y_axis
             }
 

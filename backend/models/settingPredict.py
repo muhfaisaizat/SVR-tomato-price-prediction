@@ -12,5 +12,6 @@ settingPredict = Table(
     Column('nilai_degree',String(255), nullable=True),
     Column('nilai_coef',String(255), nullable=True),
     Column('status',Boolean, nullable=False, default=False),
+    Column('statuskedepan',Boolean, nullable=False, default=False),
     
 )
