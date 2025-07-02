@@ -25,19 +25,34 @@ Pastikan sudah menginstal:
 1. Buka terminal dan pindah ke direktori backend:
    ```bash
    cd backend
-2. Instal dependensi Python: pip install -r requirements.txt
-3. Buat database MySQL dengan nama predic.
-4. Jalankan server FastAPI: uvicorn index:app --reload
-5. Buka dokumentasi API Swagger: http://localhost:8000/docs
+2. Instal dependensi Python:
+   ```bash
+   pip install -r requirements.txt
+4. Buat database MySQL dengan nama predic.
+5. Jalankan server FastAPI:
+   ```bash
+   uvicorn index:app --reload
+7. Buka dokumentasi API Swagger:
+   ```bash
+   http://localhost:8000/docs
 
 ### 2. Menyiapkan Frontend (Vite + React)
 
-1. Buka terminal baru dan pindah ke direktori frontend: cd frontend
-2. Instal dependensi: npm install atau yarn install
-3. Jalankan server frontend: npm run dev atau yarn dev
-4. Akses antarmuka pengguna di: http://localhost:5173
+1. Buka terminal baru dan pindah ke direktori frontend:
+   ```bash
+   cd frontend
+3. Instal dependensi:
+   ```bash
+   npm install atau yarn install
+5. Jalankan server frontend:
+   ```bash
+   npm run dev atau yarn dev
+7. Akses antarmuka pengguna di:
+   ```bash
+   http://localhost:5173
 
 ### Akun Dummy (Jika Dibutuhkan)
+```bash
 Email    : admin@gmail.com  
 Password : Admin123
 
