@@ -1,57 +1,53 @@
-# Aplikasi Prediksi Harga Tomat
-link demo aplikasi : https://predictiontomat.onrender.com/
+# Tomato Price Prediction Application  
+Live Demo: https://predictiontomat.onrender.com/
 
-## Deskripsi  
-Repositori ini adalah proyek web aplikasi prediksi harga tomat yang terdiri dari dua bagian utama:  
-- **Backend**: Menggunakan FastAPI, memuat API dan logika prediksi menggunakan algoritma Support Vector Regression (SVR).  
-- **Frontend**: Antarmuka pengguna berbasis ReactJS dan Vite untuk menampilkan hasil prediksi kepada pengguna.
+## Description  
+This repository is a web-based application for predicting tomato prices, consisting of two main parts:  
+- **Backend**: Built with FastAPI, containing APIs and prediction logic using the Support Vector Regression (SVR) algorithm.  
+- **Frontend**: A user interface built with ReactJS and Vite to display prediction results to users.
 
-## Struktur Proyek
-├── backend/ # Folder untuk API FastAPI dan model prediksi
-└── frontend/ # Folder untuk antarmuka pengguna (Vite + React)
+## Project Structure
+├── backend/ # Folder for FastAPI backend and prediction model
+└── frontend/ # Folder for frontend interface (Vite + React)
 
-
-## Prasyarat  
-Pastikan sudah menginstal:
+## Prerequisites  
+Make sure you have installed:
 - [Python 3.10+](https://www.python.org/)
-- [Node.js (versi LTS)](https://nodejs.org/)
+- [Node.js (LTS version)](https://nodejs.org/)
 - [MySQL](https://www.mysql.com/)
-- [npm](https://www.npmjs.com/) atau [yarn](https://yarnpkg.com/)
+- [npm](https://www.npmjs.com/) or [yarn](https://yarnpkg.com/)
 
-## Petunjuk Penginstalan dan Menjalankan Proyek  
+## Installation and Running Guide  
 
-### 1. Menyiapkan Backend (FastAPI + SVR + MySQL)
+### Backend Setup (FastAPI + SVR + MySQL)
+1. Open terminal and navigate to the backend directory:  
+   `cd backend`
 
-1. Buka terminal dan pindah ke direktori backend:
-   ```bash
-   cd backend
-2. Instal dependensi Python:
-   ```bash
-   pip install -r requirements.txt
-4. Buat database MySQL dengan nama predic.
-5. Jalankan server FastAPI:
-   ```bash
-   uvicorn index:app --reload
-7. Buka dokumentasi API Swagger:
-   ```bash
-   http://localhost:8000/docs
+2. Install Python dependencies:  
+   `pip install -r requirements.txt`
 
-### 2. Menyiapkan Frontend (Vite + React)
+3. Create a MySQL database named `predic`.
 
-1. Buka terminal baru dan pindah ke direktori frontend:
-   ```bash
-   cd frontend
-3. Instal dependensi:
-   ```bash
-   npm install atau yarn install
-5. Jalankan server frontend:
-   ```bash
-   npm run dev atau yarn dev
-7. Akses antarmuka pengguna di:
-   ```bash
-   http://localhost:5173
+4. Run the FastAPI server:  
+   `uvicorn index:app --reload`
 
-### Akun Dummy (Jika Dibutuhkan)
+5. Open Swagger API documentation in your browser:  
+   `http://localhost:8000/docs`
+
+### Frontend Setup (Vite + React)
+1. Open a new terminal and navigate to the frontend directory:  
+   `cd frontend`
+
+2. Install dependencies:  
+   `npm install` or `yarn install`
+
+3. Run the frontend development server:  
+   `npm run dev` or `yarn dev`
+
+4. The application will be available at:  
+   `http://localhost:5173`
+
+### Dummy Account 
 ```bash
 Email    : admin@gmail.com  
 Password : Admin123
